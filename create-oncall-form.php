@@ -79,81 +79,177 @@
 
     <div class="flex-1 flex flex-col overflow-hidden">
       <header class="bg-white shadow-sm">
-        <div class="flex items-center justify-between p-4">
+        <div class="flex items-center justify-between p-3">
           <div class="flex items-center">
-            <button id="mobileSidebarToggle" class="md:hidden mr-4">
+            <button id="mobileSidebarToggle" class="md:hidden mr-3">
               <i class="fas fa-bars text-gray-600"></i>
             </button>
-            <h1 class="text-xl font-semibold text-gray-800">Create PRF-On Call Form</h1>
+            <h1 class="text-lg font-semibold text-gray-800">Create PRF-On Call Form</h1>
           </div>
         </div>
       </header>
 
-      <main class="flex-1 overflow-y-auto p-6">
+      <main class="flex-1 overflow-y-auto p-4">
         <div class="max-w-6xl mx-auto">
-          <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-            <form action="#" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-4">
-                <label class="block">PRF No.</label>
-                <input type="text" name="prf_no" class="w-full p-2 border rounded-md"/>
+          <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <form action="#" class="grid grid-cols-1 md:grid-cols-2 gap-4 compact-section">
+              <!-- Left Column -->
+              <div class="space-y-3">
+                <div class="form-group">
+                  <label class="block compact-label">PRF No.</label>
+                  <input type="text" name="prf_no" class="w-full compact-input border rounded"/>
+                </div>
 
-                <label class="block">Position Title</label>
-                <input type="text" name="position_title" class="w-full p-2 border rounded-md"/>
+                <div class="form-group">
+                  <label class="block compact-label">Position Title</label>
+                  <input type="text" name="position_title" class="w-full compact-input border rounded"/>
+                </div>
 
-                <label class="block">Reports to</label>
-                <input type="text" name="reports_to" class="w-full p-2 border rounded-md"/>
+                <div class="form-group">
+                  <label class="block compact-label">Reports to</label>
+                  <input type="text" name="reports_to" class="w-full compact-input border rounded"/>
+                </div>
 
-                <label class="block">Job Level</label>
-                <input type="text" name="job_level" class="w-full p-2 border rounded-md"/>
+                <div class="form-group">
+                  <label class="block compact-label">Job Level</label>
+                  <input type="text" name="job_level" class="w-full compact-input border rounded"/>
+                </div>
 
-                <h4 class="font-semibold mt-4">Reason for Request:</h4>
-                <input type="checkbox" name="replacement" id="replacement" class="mr-2">
-                <label for="replacement">Replacement of:</label>
-                <div id="replacement-fields">
-                  <div class="input-with-delete mb-2">
-                    <input type="text" name="rep_of_name[]" class="w-full p-2 border rounded-md" placeholder="Specify name of individual">
-                    <button type="button" class="delete-field-btn bg-red-500 text-white px-2 py-1 rounded-md text-sm hover:bg-red-600">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
+                <div class="section-title">Reason for Request:</div>
+                
+                <div class="checkbox-group">
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="replacement" id="replacement" class="mr-2">
+                    <label for="replacement">Replacement of:</label>
+                  </div>
+                  <div id="replacement-fields">
+                    <div class="input-with-delete">
+                      <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded" placeholder="Specify name">
+                      <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <button type="button" id="addReplacementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add name</button>
+                </div>
+
+                <div class="checkbox-group">
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="additional_manning" id="additional_manning" class="mr-2">
+                    <label for="additional_manning">Additional Manning (attach approval from BOD):</label>
+                  </div>
+                  <div id="additional-manning-fields">
+                    <div class="input-with-delete">
+                      <input type="text" name="additional_manning_specify" class="w-full compact-input border rounded" placeholder="Specify">
+                      <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <button type="button" id="addReplacementField" class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 mb-4">Add another name</button>
 
-                <input type="checkbox" name="additional_manning" id="additional_manning" class="mr-2">
-                <label for="additional_manning">Additional Manning (attach approval from BOD):</label>
-                <input type="text" name="additional_manning_specify" class="w-full p-2 border rounded-md" placeholder="Specify if necessary">
-
-                <input type="checkbox" name="others" id="others" class="mr-2">
-                <label for="others">Others, please specify:</label>
-                <input type="text" name="others_specify" class="w-full p-2 border rounded-md">
-              </div>
-
-              <div class="space-y-4">
-                <label class="block">Date Required</label>
-                <input type="date" name="date_required" class="w-full p-2 border rounded-md"/>
-
-                <label class="block">Date Revised</label>
-                <input type="date" name="date_revised" class="w-full p-2 border rounded-md"/>
-
-                <label class="block">Number Needed</label>
-                <input type="number" name="number_needed" class="w-full p-2 border rounded-md"/>
-
-                <h4 class="font-semibold mt-4">POSITION REQUIREMENTS:</h4>
-                <div class="space-y-2">
-                  <div><input type="checkbox" name="laptop" id="laptop" class="mr-2"><label for="laptop">Laptop/Desktop:</label><input type="number" name="laptop_qty" class="w-full p-2 border rounded-md"></div>
-                  <div><input type="checkbox" name="mobile" id="mobile" class="mr-2"><label for="mobile">Mobile Unit:</label><input type="number" name="mobile_qty" class="w-full p-2 border rounded-md"></div>
-                  <div><input type="checkbox" name="phone" id="phone" class="mr-2"><label for="phone">Phone Plan:</label><input type="number" name="phone_qty" class="w-full p-2 border rounded-md"></div>
-                  <div><input type="checkbox" name="office" id="office" class="mr-2"><label for="office">Office/Desk Space:</label><input type="number" name="office_qty" class="w-full p-2 border rounded-md"></div>
-                  <div><input type="checkbox" name="uniform" id="uniform" class="mr-2"><label for="uniform">Uniform:</label><input type="number" name="uniform_qty" class="w-full p-2 border rounded-md"></div>
-                  <div><input type="checkbox" name="table" id="table" class="mr-2"><label for="table">Table:</label><input type="number" name="table_qty" class="w-full p-2 border rounded-md"></div>
-                  <div><input type="checkbox" name="chair" id="chair" class="mr-2"><label for="chair">Chair:</label><input type="number" name="chair_qty" class="w-full p-2 border rounded-md"></div>
-                  <div><input type="checkbox" name="others_req" id="others_req" class="mr-2"><label for="others_req">Others, please specify:</label><input type="text" name="others_specify_req" class="w-full p-2 border rounded-md"></div>
+                <div class="checkbox-group">
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="others" id="others" class="mr-2">
+                    <label for="others">Others, please specify:</label>
+                  </div>
+                  <div id="others-fields">
+                    <div class="input-with-delete">
+                      <input type="text" name="others_specify" class="w-full compact-input border rounded" placeholder="Specify">
+                      <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div class="col-span-1 md:col-span-2 mt-6 flex space-x-4">
-                <button type="submit" class="bg-orange-600 text-white py-2 px-6 rounded-md hover:bg-orange-700">Save</button>
-                <button type="reset" class="bg-gray-300 text-gray-700 py-2 px-6 rounded-md hover:bg-gray-400">Reset</button>
+              <!-- Right Column -->
+              <div class="space-y-3">
+                <div class="form-group">
+                  <label class="block compact-label">Date Required</label>
+                  <input type="date" name="date_required" class="w-full compact-input border rounded"/>
+                </div>
+
+                <div class="form-group">
+                  <label class="block compact-label">Date Revised</label>
+                  <input type="date" name="date_revised" class="w-full compact-input border rounded"/>
+                </div>
+
+                <div class="form-group">
+                  <label class="block compact-label">Number Needed</label>
+                  <input type="number" name="number_needed" class="w-full compact-input border rounded"/>
+                </div>
+
+                <div class="section-title">POSITION REQUIREMENTS:</div>
+                
+                <div class="grid-requirements">
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="laptop" id="laptop" class="mr-2">
+                    <label for="laptop">Laptop/Desktop:</label>
+                  </div>
+                  <input type="number" name="laptop_qty" class="compact-input border rounded">
+
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="mobile" id="mobile" class="mr-2">
+                    <label for="mobile">Mobile Unit:</label>
+                  </div>
+                  <input type="number" name="mobile_qty" class="compact-input border rounded">
+
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="phone" id="phone" class="mr-2">
+                    <label for="phone">Phone Plan:</label>
+                  </div>
+                  <input type="number" name="phone_qty" class="compact-input border rounded">
+
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="office" id="office" class="mr-2">
+                    <label for="office">Office/Desk Space:</label>
+                  </div>
+                  <input type="number" name="office_qty" class="compact-input border rounded">
+
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="uniform" id="uniform" class="mr-2">
+                    <label for="uniform">Uniform:</label>
+                  </div>
+                  <input type="number" name="uniform_qty" class="compact-input border rounded">
+
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="table" id="table" class="mr-2">
+                    <label for="table">Table:</label>
+                  </div>
+                  <input type="number" name="table_qty" class="compact-input border rounded">
+
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="chair" id="chair" class="mr-2">
+                    <label for="chair">Chair:</label>
+                  </div>
+                  <input type="number" name="chair_qty" class="compact-input border rounded">
+
+                  <div class="flex items-center text-sm">
+                    <input type="checkbox" name="others_req" id="others_req" class="mr-2">
+                    <label for="others_req">Others:</label>
+                  </div>
+                  <div class="col-span-2">
+                    <div id="others-req-fields">
+                      <div class="input-with-delete">
+                        <input type="text" name="others_specify_req" class="w-full compact-input border rounded" placeholder="Specify requirement">
+                        <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-span-1 md:col-span-2 mt-4 flex space-x-3">
+                <button type="submit" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                  <i class="fas fa-save mr-1 text-xs"></i> Save
+                </button>
+                <button type="reset" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                  <i class="fas fa-undo mr-1 text-xs"></i> Reset
+                </button>
               </div>
             </form>
           </div>
@@ -167,37 +263,42 @@
       document.querySelector('.sidebar').classList.toggle('active');
     });
 
+    // Function to create input field with delete button
     function createInputFieldWithDelete(name, placeholder) {
       const wrapperDiv = document.createElement('div');
-      wrapperDiv.className = 'input-with-delete mb-2';
+      wrapperDiv.className = 'input-with-delete';
 
       const newInput = document.createElement('input');
       newInput.type = 'text';
       newInput.name = name;
-      newInput.className = 'w-full p-2 border rounded-md';
+      newInput.className = 'w-full compact-input border rounded';
       newInput.placeholder = placeholder;
 
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
-      deleteButton.className = 'delete-field-btn bg-red-500 text-white px-2 py-1 rounded-md text-sm hover:bg-red-600';
+      deleteButton.className = 'delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600';
       deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
 
-      deleteButton.addEventListener('click', () => wrapperDiv.remove());
+      deleteButton.addEventListener('click', () => {
+        wrapperDiv.remove();
+      });
 
       wrapperDiv.appendChild(newInput);
       wrapperDiv.appendChild(deleteButton);
       return wrapperDiv;
     }
 
+    // Add replacement field
     document.getElementById('addReplacementField').addEventListener('click', () => {
       const replacementFieldsDiv = document.getElementById('replacement-fields');
-      replacementFieldsDiv.appendChild(createInputFieldWithDelete('rep_of_name[]', 'Specify name of individual'));
+      replacementFieldsDiv.appendChild(createInputFieldWithDelete('rep_of_name[]', 'Specify name'));
     });
 
-    document.querySelectorAll('.delete-field-btn').forEach(button => {
-      button.addEventListener('click', () => {
-        button.closest('.input-with-delete').remove();
-      });
+    // Initialize delete buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('delete-field-btn')) {
+        e.target.closest('.input-with-delete').remove();
+      }
     });
   </script>
 </body>
