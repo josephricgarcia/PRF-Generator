@@ -89,16 +89,12 @@
 <body class="bg-gray-100 font-sans">
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <div class="sidebar bg-orange-600 text-white flex-shrink-0">
+    <div class="sidebar bg-orange-600 text-white flex-shrink-0">
     <div class="p-3 flex items-center justify-between border-b border-orange-500">
-        <div class="flex items-center space-x-2">
-            <!-- Standardized Logo Placeholder -->
                 <div class="flex items-center space-x-2">
                     <img src="images/be-logo.png" alt="Logo" class="w-8 h-8 rounded-xl object-cover ">
                     <span class="text-lg font-bold">PRF System</span>
                 </div>
-            <span class="text-lg font-bold">PRF System</span>
-        </div>
         <button id="sidebarToggle" class="md:hidden">
             <i class="fas fa-times"></i>
         </button>
@@ -130,7 +126,7 @@
                 </li>
                 <li>
                     <a href="create-oncall-form.php" 
-                       class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
+                       class="flex items-center space-x-2 p-2 rounded bg-white text-orange-600">
                         <i class="fas fa-file-alt w-4"></i>
                         <span class="text-sm">Create PRF-On Call</span>
                     </a>

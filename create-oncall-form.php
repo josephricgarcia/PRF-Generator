@@ -67,7 +67,7 @@
                 </li>
                 <li>
                     <a href="create-oncall-form.php" 
-                       class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
+                       class="flex items-center space-x-2 p-2 rounded bg-white text-orange-600">
                         <i class="fas fa-file-alt w-4"></i>
                         <span class="text-sm">Create PRF-On Call</span>
                     </a>
