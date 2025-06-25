@@ -34,6 +34,7 @@
                     <img src="images/be-logo.png" alt="Logo" class="w-8 h-8 rounded-xl object-cover ">
                     <span class="text-lg font-bold">PRF System</span>
                 </div>
+                
                         <button id="sidebarToggle" class="md:hidden">
                             <i class="fas fa-times"></i>
                         </button>
