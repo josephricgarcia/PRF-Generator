@@ -1,3 +1,82 @@
+<?php
+include 'db.php'; // Include database connection
+
+// Process form submission
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Sanitize input data
+    $prf = htmlspecialchars($_POST['prf']);
+    $pos = htmlspecialchars($_POST['pos']);
+    $rep = htmlspecialchars($_POST['rep']);
+    $job = htmlspecialchars($_POST['job']);
+    $date_req = $_POST['date_req'];
+    $date_needed = $_POST['date_needed'];
+    $num_needed = intval($_POST['num_needed']);
+    
+    // Checkbox values (1 for checked, 0 for unchecked)
+    $replacement = isset($_POST['replacement']) ? 1 : 0;
+    $manning = isset($_POST['manning']) ? 1 : 0;
+    $others_reason = isset($_POST['others_reason']) ? 1 : 0;
+    $laptop = isset($_POST['laptop']) ? 1 : 0;
+    $mobile = isset($_POST['mobile']) ? 1 : 0;
+    $phone = isset($_POST['phone']) ? 1 : 0;
+    $office = isset($_POST['office']) ? 1 : 0;
+    $uniform = isset($_POST['uniform']) ? 1 : 0;
+    $table = isset($_POST['table']) ? 1 : 0;
+    $chair = isset($_POST['chair']) ? 1 : 0;
+    $others_requirement = isset($_POST['others_requirement']) ? 1 : 0;
+    
+    // Quantities
+    $laptop_qty = isset($_POST['laptop_qty']) ? intval($_POST['laptop_qty']) : 0;
+    $mobile_qty = isset($_POST['mobile_qty']) ? intval($_POST['mobile_qty']) : 0;
+    $phone_qty = isset($_POST['phone_qty']) ? intval($_POST['phone_qty']) : 0;
+    $office_qty = isset($_POST['office_qty']) ? intval($_POST['office_qty']) : 0;
+    $uniform_qty = isset($_POST['uniform_qty']) ? intval($_POST['uniform_qty']) : 0;
+    $table_qty = isset($_POST['table_qty']) ? intval($_POST['table_qty']) : 0;
+    $chair_qty = isset($_POST['chair_qty']) ? intval($_POST['chair_qty']) : 0;
+    
+    // Process array fields
+    $rep_of_names = isset($_POST['rep_of_name']) ? json_encode($_POST['rep_of_name']) : json_encode([]);
+    $app_names = isset($_POST['app_name']) ? json_encode($_POST['app_name']) : json_encode([]);
+    $manning_specs = isset($_POST['manning_spec']) ? json_encode($_POST['manning_spec']) : json_encode([]);
+    $others_reason_specs = isset($_POST['others_reason_spec']) ? json_encode($_POST['others_reason_spec']) : json_encode([]);
+    $others_requirement_specs = isset($_POST['others_requirement_spec']) ? json_encode($_POST['others_requirement_spec']) : json_encode([]);
+    
+    // Prepare and bind
+    $stmt = $conn->prepare("INSERT INTO replacement_forms (
+        prf_no, position_title, reports_to, job_level, 
+        reason_replacement, rep_of_name, applicant_names,
+        reason_manning, manning_spec, reason_others, others_reason_spec,
+        date_requested, date_needed, number_needed,
+        requirement_laptop, laptop_qty, requirement_mobile, mobile_qty,
+        requirement_phone, phone_qty, requirement_office, office_qty,
+        requirement_uniform, uniform_qty, requirement_table, table_qty,
+        requirement_chair, chair_qty, requirement_others, others_requirement_spec
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
+    $stmt->bind_param("ssssisssissssiiiiiiiiiiiiiiiii", 
+        $prf, $pos, $rep, $job,
+        $replacement, $rep_of_names, $app_names,
+        $manning, $manning_specs, $others_reason, $others_reason_specs,
+        $date_req, $date_needed, $num_needed,
+        $laptop, $laptop_qty, $mobile, $mobile_qty,
+        $phone, $phone_qty, $office, $office_qty,
+        $uniform, $uniform_qty, $table, $table_qty,
+        $chair, $chair_qty, $others_requirement, $others_requirement_specs
+    );
+    
+    // Execute and handle result
+    if ($stmt->execute()) {
+        $success = "PRF form submitted successfully!";
+    } else {
+        $error = "Error: " . $stmt->error;
+    }
+    
+    $stmt->close();
+}
+$conn->close();
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,12 +207,12 @@
                             <div class="space-y-3">
                                 <div class="form-group">
                                     <label for="prf" class="block compact-label">PRF No:</label>
-                                    <input type="text" id="prf" name="prf" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="prf" name="prf" class="w-full compact-input border rounded">
                                 </div>
 
                                 <div class="form-group">
                                     <label for="pos" class="block compact-label">Position Title:</label>
-                                    <input type="text" id="pos" name="pos" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="pos" name="pos" class="w-full compact-input border rounded">
                                 </div>
 
                                 <div class="form-group">
@@ -217,17 +296,17 @@
                             <div class="space-y-3">
                                 <div class="form-group">
                                     <label for="date_req" class="block compact-label">Date Requested:</label>
-                                    <input type="date" id="date_req" name="date_req" class="w-full compact-input border rounded" required>
+                                    <input type="date" id="date_req" name="date_req" class="w-full compact-input border rounded">
                                 </div>
 
                                 <div class="form-group">
                                     <label for="date_needed" class="block compact-label">Date Needed:</label>
-                                    <input type="date" id="date_needed" name="date_needed" class="w-full compact-input border rounded" required>
+                                    <input type="date" id="date_needed" name="date_needed" class="w-full compact-input border rounded">
                                 </div>
 
                                 <div class="form-group">
                                     <label for="num_needed" class="block compact-label">Number Needed:</label>
-                                    <input type="number" id="num_needed" name="num_needed" class="w-full compact-input border rounded" required>
+                                    <input type="number" id="num_needed" name="num_needed" class="w-full compact-input border rounded">
                                 </div>
 
                                 <div class="section-title">POSITION REQUIREMENTS:</div>
@@ -291,15 +370,16 @@
                                         <button type="button" id="addOthersRequirementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add requirement</button>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div class="mt-4 flex space-x-3">
-                                    <button type="submit" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
-                                        <i class="fas fa-save mr-1 text-xs"></i> Save
-                                    </button>
-                                    <button type="reset" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                                        <i class="fas fa-undo mr-1 text-xs"></i> Reset
-                                    </button>
-                                </div>
+                            <!-- Buttons moved here to match on-call form -->
+                            <div class="col-span-1 md:col-span-2 mt-4 flex space-x-3">
+                                <button type="submit" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                                    <i class="fas fa-save mr-1 text-xs"></i> Save
+                                </button>
+                                <button type="reset" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                                    <i class="fas fa-undo mr-1 text-xs"></i> Reset
+                                </button>
                             </div>
                         </form>
                     </div>

@@ -7,10 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-        .sidebar {
-            transition: all 0.3s ease;
-            min-width: 200px;
-        }
+    .sidebar {
+      transition: all 0.3s ease;
+      min-width: 200px;
+    }
     @media (max-width: 768px) {
       .sidebar {
         width: 0;
@@ -23,7 +23,47 @@
     .input-with-delete {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    /* Compact form styles */
+    .compact-input {
+      padding: 0.4rem 0.6rem;
+      font-size: 0.875rem;
+      height: 2rem;
+    }
+    .compact-label {
+      font-size: 0.875rem;
+      margin-bottom: 0.2rem;
+    }
+    .compact-btn {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8125rem;
+      margin-bottom: 8px;
+    }
+    .compact-section {
+      gap: 0.8rem;
+    }
+    .form-group {
+      margin-bottom: 0.8rem;
+    }
+    .checkbox-group {
+      margin-bottom: 0.4rem;
+    }
+    .section-title {
+      font-weight: 600;
+      margin: 0.8rem 0 0.5rem;
+      font-size: 0.95rem;
+      color: #333;
+      padding-bottom: 0.2rem;
+      border-bottom: 1px solid #eee;
+    }
+    .delete-field-btn {
+      height: 2rem;
+      min-width: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
   </style>
 </head>
@@ -140,12 +180,13 @@
                   </div>
                   <div id="additional-manning-fields">
                     <div class="input-with-delete">
-                      <input type="text" name="additional_manning_specify" class="w-full compact-input border rounded" placeholder="Specify">
+                      <input type="text" name="additional_manning_specify[]" class="w-full compact-input border rounded" placeholder="Specify">
                       <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
                         <i class="fas fa-trash-alt"></i>
                       </button>
                     </div>
                   </div>
+                  <button type="button" id="addAdditionalManningField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add manning</button>
                 </div>
 
                 <div class="checkbox-group">
@@ -155,12 +196,13 @@
                   </div>
                   <div id="others-fields">
                     <div class="input-with-delete">
-                      <input type="text" name="others_specify" class="w-full compact-input border rounded" placeholder="Specify">
+                      <input type="text" name="others_specify[]" class="w-full compact-input border rounded" placeholder="Specify">
                       <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
                         <i class="fas fa-trash-alt"></i>
                       </button>
                     </div>
                   </div>
+                  <button type="button" id="addOthersField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add reason</button>
                 </div>
               </div>
 
@@ -183,62 +225,63 @@
 
                 <div class="section-title">POSITION REQUIREMENTS:</div>
                 
-                <div class="grid-requirements">
-                  <div class="flex items-center text-sm">
+                <div class="grid grid-cols-[auto_1fr] gap-2 text-sm">
+                  <div class="flex items-center">
                     <input type="checkbox" name="laptop" id="laptop" class="mr-2">
                     <label for="laptop">Laptop/Desktop:</label>
                   </div>
                   <input type="number" name="laptop_qty" class="compact-input border rounded">
 
-                  <div class="flex items-center text-sm">
+                  <div class="flex items-center">
                     <input type="checkbox" name="mobile" id="mobile" class="mr-2">
                     <label for="mobile">Mobile Unit:</label>
                   </div>
                   <input type="number" name="mobile_qty" class="compact-input border rounded">
 
-                  <div class="flex items-center text-sm">
+                  <div class="flex items-center">
                     <input type="checkbox" name="phone" id="phone" class="mr-2">
                     <label for="phone">Phone Plan:</label>
                   </div>
                   <input type="number" name="phone_qty" class="compact-input border rounded">
 
-                  <div class="flex items-center text-sm">
+                  <div class="flex items-center">
                     <input type="checkbox" name="office" id="office" class="mr-2">
                     <label for="office">Office/Desk Space:</label>
                   </div>
                   <input type="number" name="office_qty" class="compact-input border rounded">
 
-                  <div class="flex items-center text-sm">
+                  <div class="flex items-center">
                     <input type="checkbox" name="uniform" id="uniform" class="mr-2">
                     <label for="uniform">Uniform:</label>
                   </div>
                   <input type="number" name="uniform_qty" class="compact-input border rounded">
 
-                  <div class="flex items-center text-sm">
+                  <div class="flex items-center">
                     <input type="checkbox" name="table" id="table" class="mr-2">
                     <label for="table">Table:</label>
                   </div>
                   <input type="number" name="table_qty" class="compact-input border rounded">
 
-                  <div class="flex items-center text-sm">
+                  <div class="flex items-center">
                     <input type="checkbox" name="chair" id="chair" class="mr-2">
                     <label for="chair">Chair:</label>
                   </div>
                   <input type="number" name="chair_qty" class="compact-input border rounded">
 
-                  <div class="flex items-center text-sm">
+                  <div class="flex items-center">
                     <input type="checkbox" name="others_req" id="others_req" class="mr-2">
                     <label for="others_req">Others:</label>
                   </div>
                   <div class="col-span-2">
                     <div id="others-req-fields">
                       <div class="input-with-delete">
-                        <input type="text" name="others_specify_req" class="w-full compact-input border rounded" placeholder="Specify requirement">
+                        <input type="text" name="others_specify_req[]" class="w-full compact-input border rounded" placeholder="Specify requirement">
                         <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
                           <i class="fas fa-trash-alt"></i>
                         </button>
                       </div>
                     </div>
+                    <button type="button" id="addOthersReqField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add requirement</button>
                   </div>
                 </div>
               </div>
@@ -278,6 +321,11 @@
       deleteButton.type = 'button';
       deleteButton.className = 'delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600';
       deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+      deleteButton.style.height = '2rem';
+      deleteButton.style.minWidth = '2rem';
+      deleteButton.style.display = 'flex';
+      deleteButton.style.alignItems = 'center';
+      deleteButton.style.justifyContent = 'center';
 
       deleteButton.addEventListener('click', () => {
         wrapperDiv.remove();
@@ -294,11 +342,29 @@
       replacementFieldsDiv.appendChild(createInputFieldWithDelete('rep_of_name[]', 'Specify name'));
     });
 
-    // Initialize delete buttons
-    document.addEventListener('click', function(e) {
-      if (e.target.classList.contains('delete-field-btn')) {
-        e.target.closest('.input-with-delete').remove();
-      }
+    // Add additional manning field
+    document.getElementById('addAdditionalManningField').addEventListener('click', () => {
+      const additionalManningFieldsDiv = document.getElementById('additional-manning-fields');
+      additionalManningFieldsDiv.appendChild(createInputFieldWithDelete('additional_manning_specify[]', 'Specify'));
+    });
+
+    // Add others reason field
+    document.getElementById('addOthersField').addEventListener('click', () => {
+      const othersFieldsDiv = document.getElementById('others-fields');
+      othersFieldsDiv.appendChild(createInputFieldWithDelete('others_specify[]', 'Specify'));
+    });
+
+    // Add others requirement field
+    document.getElementById('addOthersReqField').addEventListener('click', () => {
+      const othersReqFieldsDiv = document.getElementById('others-req-fields');
+      othersReqFieldsDiv.appendChild(createInputFieldWithDelete('others_specify_req[]', 'Specify requirement'));
+    });
+
+    // Initialize delete buttons for pre-existing fields
+    document.querySelectorAll('.delete-field-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        this.closest('.input-with-delete').remove();
+      });
     });
   </script>
 </body>

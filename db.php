@@ -1,16 +1,22 @@
 <?php
 
-$host = 'localhost';
-$dbname = 'prf_system';
-$username = 'root';
-$password = '';
+// Database configuration
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "prf_db";
 
 // Create connection
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
+
+// Initialize variables
+$success = "";
+$error = "";
+
 
 ?>
