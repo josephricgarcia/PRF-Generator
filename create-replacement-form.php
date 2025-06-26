@@ -41,6 +41,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $others_reason_specs = isset($_POST['others_reason_spec']) ? json_encode($_POST['others_reason_spec']) : json_encode([]);
     $others_requirement_specs = isset($_POST['others_requirement_spec']) ? json_encode($_POST['others_requirement_spec']) : json_encode([]);
     
+    // Determine status based on number needed vs replacements provided
+    $rep_count = count(json_decode($rep_of_names, true));
+    if ($num_needed <= $rep_count) {
+        $status = 'completed';
+    } else {
+        $remaining = $num_needed - $rep_count;
+        $status = "pending (lacking $remaining needed)";
+    }
+    
     // Prepare and bind
     $stmt = $conn->prepare("INSERT INTO replacement_forms (
         prf_no, position_title, reports_to, job_level, 
@@ -50,10 +59,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         requirement_laptop, laptop_qty, requirement_mobile, mobile_qty,
         requirement_phone, phone_qty, requirement_office, office_qty,
         requirement_uniform, uniform_qty, requirement_table, table_qty,
-        requirement_chair, chair_qty, requirement_others, others_requirement_spec
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        requirement_chair, chair_qty, requirement_others, others_requirement_spec,
+        status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
-    $stmt->bind_param("ssssisssissssiiiiiiiiiiiiiiiii", 
+    $stmt->bind_param("ssssisssissssiiiiiiiiiiiiiiiiis", 
         $prf, $pos, $rep, $job,
         $replacement, $rep_of_names, $app_names,
         $manning, $manning_specs, $others_reason, $others_reason_specs,
@@ -61,12 +71,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $laptop, $laptop_qty, $mobile, $mobile_qty,
         $phone, $phone_qty, $office, $office_qty,
         $uniform, $uniform_qty, $table, $table_qty,
-        $chair, $chair_qty, $others_requirement, $others_requirement_specs
+        $chair, $chair_qty, $others_requirement, $others_requirement_specs,
+        $status
     );
     
     // Execute and handle result
     if ($stmt->execute()) {
-        $success = "PRF form submitted successfully!";
+        $success = "PRF form submitted successfully! Status: " . ucfirst($status);
     } else {
         $error = "Error: " . $stmt->error;
     }
@@ -75,7 +86,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 $conn->close();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -138,6 +148,77 @@ $conn->close();
             padding-bottom: 0.2rem;
             border-bottom: 1px solid #eee;
         }
+        
+        /* Comparison styles */
+        .comparison-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .comparison-bar {
+            flex-grow: 1;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .comparison-fill {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        .comparison-text {
+            font-size: 0.75rem;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+        
+        /* Status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-completed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-pending {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Disabled reason styles */
+        .disabled-section {
+            opacity: 0.6;
+        }
+        .disabled-section input:not([type="radio"]),
+        .disabled-section button:not(.reason-radio) {
+            pointer-events: none;
+            background-color: #f3f4f6;
+            border-color: #e5e7eb;
+        }
+        .disabled-section button:not(.reason-radio) {
+            background-color: #9ca3af !important;
+        }
+        
+        /* Nested section styling */
+        .nested-section {
+            margin-left: 1.5rem;
+            border-left: 2px solid #e5e7eb;
+            padding-left: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Radio button styles */
+        .reason-radio {
+            pointer-events: auto !important;
+            opacity: 1 !important;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -195,45 +276,57 @@ $conn->close();
                         </button>
                         <h1 class="text-lg font-semibold text-gray-800">Create PRF-Replacement Form</h1>
                     </div>
-
                 </div>
             </header>
 
             <main class="flex-1 overflow-y-auto p-4">
                 <div class="max-w-6xl mx-auto">
+                    <?php if ($_SERVER["REQUEST_METHOD"] == "POST"): ?>
+                        <?php if (isset($success)): ?>
+                            <script>
+                                alert(<?php echo json_encode($success); ?>);
+                            </script>
+                        <?php elseif (isset($error)): ?>
+                            <script>
+                                alert(<?php echo json_encode($error); ?>);
+                            </script>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
                     <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
                         <form action="" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4 compact-section">
                             <!-- Left Column -->
                             <div class="space-y-3">
                                 <div class="form-group">
                                     <label for="prf" class="block compact-label">PRF No:</label>
-                                    <input type="text" id="prf" name="prf" class="w-full compact-input border rounded">
+                                    <input type="text" id="prf" name="prf" class="w-full compact-input border rounded" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="pos" class="block compact-label">Position Title:</label>
-                                    <input type="text" id="pos" name="pos" class="w-full compact-input border rounded">
+                                    <input type="text" id="pos" name="pos" class="w-full compact-input border rounded" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="rep" class="block compact-label">Reports to:</label>
-                                    <input type="text" id="rep" name="rep" class="w-full compact-input border rounded">
+                                    <input type="text" id="rep" name="rep" class="w-full compact-input border rounded" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="job" class="block compact-label">Job Level:</label>
-                                    <input type="text" id="job" name="job" class="w-full compact-input border rounded">
+                                    <input type="text" id="job" name="job" class="w-full compact-input border rounded" required>
                                 </div>
 
                                 <div class="section-title">Reason for Request:</div>
                                 
-                                <div class="checkbox-group">
-                                    <div class="flex items-center text-sm">
-                                        <input type="checkbox" name="replacement" id="replacement" class="mr-2">
-                                        <label for="replacement">Replacement of:</label>
+                                <!-- Replacement of Section with nested Applicant Names -->
+                                <div class="checkbox-group border-l-2 border-orange-500 pl-4 mb-4">
+                                    <div class="flex items-center text-sm mb-2">
+                                        <input type="radio" name="reason_type" id="replacement" value="replacement" class="mr-2 reason-radio" checked>
+                                        <label for="replacement" class="font-medium">Replacement of:</label>
                                     </div>
                                     
-                                    <div id="replacement-fields">
+                                    <div id="replacement-fields" class="ml-6">
                                         <div class="input-with-delete">
                                             <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded" placeholder="Specify name">
                                             <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
@@ -241,54 +334,57 @@ $conn->close();
                                             </button>
                                         </div>
                                     </div>
-                                    <button type="button" id="addReplacementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add name</button>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="app_name" class="block compact-label">Applicant Name(s):</label>
-                                    <div id="applicant-fields">
-                                        <div class="input-with-delete">
-                                            <input type="text" name="app_name[]" class="w-full compact-input border rounded" placeholder="Specify applicant">
-                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
+                                    <button type="button" id="addReplacementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600 ml-6">Add name</button>
+                                    
+                                    <!-- Applicant Names nested under Replacement -->
+                                    <div class="nested-section">
+                                        <label class="block compact-label">Applicant Name(s):</label>
+                                        <div id="applicant-fields">
+                                            <div class="input-with-delete">
+                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded" placeholder="Specify applicant">
+                                                <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </div>
                                         </div>
+                                        <button type="button" id="addApplicantField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add applicant</button>
                                     </div>
-                                    <button type="button" id="addApplicantField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add applicant</button>
                                 </div>
 
-                                <div class="checkbox-group">
-                                    <div class="flex items-center text-sm">
-                                        <input type="checkbox" name="manning" id="manning" class="mr-2">
-                                        <label for="manning">Additional Manning:</label>
+                                <!-- Additional Manning Section -->
+                                <div class="checkbox-group border-l-2 border-gray-300 pl-4 mb-4 disabled-section">
+                                    <div class="flex items-center text-sm mb-2">
+                                        <input type="radio" name="reason_type" id="manning" value="manning" class="mr-2 reason-radio">
+                                        <label for="manning" class="font-medium">Additional Manning:</label>
                                     </div>
                                     
-                                    <div id="manning-fields">
+                                    <div id="manning-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="manning_spec[]" class="w-full compact-input border rounded" placeholder="Specify manning">
-                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                                            <input type="text" name="manning_spec[]" class="w-full compact-input border rounded" placeholder="Specify manning" disabled>
+                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <button type="button" id="addManningField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add manning</button>
+                                    <button type="button" id="addManningField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600 ml-6" disabled>Add manning</button>
                                 </div>
 
-                                <div class="checkbox-group">
-                                    <div class="flex items-center text-sm">
-                                        <input type="checkbox" name="others_reason" id="others_reason" class="mr-2">
-                                        <label for="others_reason">Others:</label>
+                                <!-- Others Section -->
+                                <div class="checkbox-group border-l-2 border-gray-300 pl-4 disabled-section">
+                                    <div class="flex items-center text-sm mb-2">
+                                        <input type="radio" name="reason_type" id="others_reason" value="others_reason" class="mr-2 reason-radio">
+                                        <label for="others_reason" class="font-medium">Others:</label>
                                     </div>
                                     
-                                    <div id="others-reason-fields">
+                                    <div id="others-reason-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="others_reason_spec[]" class="w-full compact-input border rounded" placeholder="Specify reason">
-                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                                            <input type="text" name="others_reason_spec[]" class="w-full compact-input border rounded" placeholder="Specify reason" disabled>
+                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <button type="button" id="addOthersReasonField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add reason</button>
+                                    <button type="button" id="addOthersReasonField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600 ml-6" disabled>Add reason</button>
                                 </div>
                             </div>
 
@@ -296,17 +392,19 @@ $conn->close();
                             <div class="space-y-3">
                                 <div class="form-group">
                                     <label for="date_req" class="block compact-label">Date Requested:</label>
-                                    <input type="date" id="date_req" name="date_req" class="w-full compact-input border rounded">
+                                    <input type="date" id="date_req" name="date_req" class="w-full compact-input border rounded" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="date_needed" class="block compact-label">Date Needed:</label>
-                                    <input type="date" id="date_needed" name="date_needed" class="w-full compact-input border rounded">
+                                    <input type="date" id="date_needed" name="date_needed" class="w-full compact-input border rounded" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="num_needed" class="block compact-label">Number Needed:</label>
-                                    <input type="number" id="num_needed" name="num_needed" class="w-full compact-input border rounded">
+                                    <input type="number" id="num_needed" name="num_needed" min="1" class="w-full compact-input border rounded" required>
+                                    <div id="comparison-display" class="mt-1"></div>
+                                    <div id="status-preview" class="mt-1 text-sm"></div>
                                 </div>
 
                                 <div class="section-title">POSITION REQUIREMENTS:</div>
@@ -372,7 +470,7 @@ $conn->close();
                                 </div>
                             </div>
 
-                            <!-- Buttons moved here to match on-call form -->
+                            <!-- Form buttons -->
                             <div class="col-span-1 md:col-span-2 mt-4 flex space-x-3">
                                 <button type="submit" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
                                     <i class="fas fa-save mr-1 text-xs"></i> Save
@@ -395,7 +493,7 @@ $conn->close();
         });
 
         // Function to create a new input field with a delete button
-        function createInputFieldWithDelete(name, placeholder) {
+        function createInputFieldWithDelete(name, placeholder, disabled = false) {
             const wrapperDiv = document.createElement('div');
             wrapperDiv.className = 'input-with-delete';
 
@@ -404,14 +502,22 @@ $conn->close();
             newInput.name = name;
             newInput.className = 'w-full compact-input border rounded';
             newInput.placeholder = placeholder;
+            if (disabled) {
+                newInput.disabled = true;
+                newInput.classList.add('disabled-section');
+            }
+            newInput.addEventListener('input', updateReasonComparison);
 
             const deleteButton = document.createElement('button');
             deleteButton.type = 'button';
-            deleteButton.className = 'delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600';
+            deleteButton.className = `delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600 ${disabled ? 'disabled-section' : ''}`;
             deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-
+            if (disabled) {
+                deleteButton.disabled = true;
+            }
             deleteButton.addEventListener('click', () => {
                 wrapperDiv.remove();
+                updateReasonComparison();
             });
 
             wrapperDiv.appendChild(newInput);
@@ -423,25 +529,29 @@ $conn->close();
         // Add Replacement Field
         document.getElementById('addReplacementField').addEventListener('click', () => {
             const replacementFieldsDiv = document.getElementById('replacement-fields');
-            replacementFieldsDiv.appendChild(createInputFieldWithDelete('rep_of_name[]', 'Specify name'));
+            const isDisabled = replacementFieldsDiv.parentElement.classList.contains('disabled-section');
+            replacementFieldsDiv.appendChild(createInputFieldWithDelete('rep_of_name[]', 'Specify name', isDisabled));
         });
 
         // Add Applicant Field
         document.getElementById('addApplicantField').addEventListener('click', () => {
             const applicantFieldsDiv = document.getElementById('applicant-fields');
-            applicantFieldsDiv.appendChild(createInputFieldWithDelete('app_name[]', 'Specify applicant'));
+            const isDisabled = applicantFieldsDiv.closest('.checkbox-group').classList.contains('disabled-section');
+            applicantFieldsDiv.appendChild(createInputFieldWithDelete('app_name[]', 'Specify applicant', isDisabled));
         });
 
         // Add Manning Field
         document.getElementById('addManningField').addEventListener('click', () => {
             const manningFieldsDiv = document.getElementById('manning-fields');
-            manningFieldsDiv.appendChild(createInputFieldWithDelete('manning_spec[]', 'Specify manning'));
+            const isDisabled = manningFieldsDiv.parentElement.classList.contains('disabled-section');
+            manningFieldsDiv.appendChild(createInputFieldWithDelete('manning_spec[]', 'Specify manning', isDisabled));
         });
 
         // Add Others Reason Field
         document.getElementById('addOthersReasonField').addEventListener('click', () => {
             const othersReasonFieldsDiv = document.getElementById('others-reason-fields');
-            othersReasonFieldsDiv.appendChild(createInputFieldWithDelete('others_reason_spec[]', 'Specify reason'));
+            const isDisabled = othersReasonFieldsDiv.parentElement.classList.contains('disabled-section');
+            othersReasonFieldsDiv.appendChild(createInputFieldWithDelete('others_reason_spec[]', 'Specify reason', isDisabled));
         });
 
         // Add Others Requirement Field
@@ -454,8 +564,209 @@ $conn->close();
         document.querySelectorAll('.delete-field-btn').forEach(button => {
             button.addEventListener('click', function() {
                 this.closest('.input-with-delete').remove();
+                updateReasonComparison();
             });
         });
+
+        // Handle reason type selection
+        document.querySelectorAll('input[name="reason_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const selectedReason = this.value;
+                
+                // Get all reason sections
+                const replacementSection = document.querySelector('#replacement').closest('.checkbox-group');
+                const applicantSection = document.querySelector('#applicant-fields').closest('.nested-section');
+                const manningSection = document.querySelector('#manning').closest('.checkbox-group');
+                const othersReasonSection = document.querySelector('#others_reason').closest('.checkbox-group');
+                
+                // Reset all sections first
+                [replacementSection, applicantSection, manningSection, othersReasonSection].forEach(section => {
+                    const inputs = section.querySelectorAll('input:not([type="radio"])');
+                    const buttons = section.querySelectorAll('button:not(.reason-radio)');
+                    
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                        input.closest('.input-with-delete')?.classList.add('disabled-section');
+                    });
+                    
+                    buttons.forEach(button => {
+                        button.disabled = true;
+                        button.classList.add('disabled-section');
+                    });
+                    
+                    section.classList.add('disabled-section');
+                });
+                
+                // Enable selected section
+                if (selectedReason === 'replacement') {
+                    replacementSection.classList.remove('disabled-section');
+                    applicantSection.classList.remove('disabled-section');
+                    
+                    const replacementInputs = replacementSection.querySelectorAll('input:not([type="radio"])');
+                    const replacementButtons = replacementSection.querySelectorAll('button:not(.reason-radio)');
+                    const applicantInputs = applicantSection.querySelectorAll('input');
+                    const applicantButtons = applicantSection.querySelectorAll('button');
+                    
+                    replacementInputs.forEach(input => {
+                        input.disabled = false;
+                        input.closest('.input-with-delete')?.classList.remove('disabled-section');
+                    });
+                    
+                    replacementButtons.forEach(button => {
+                        button.disabled = false;
+                        button.classList.remove('disabled-section');
+                    });
+                    
+                    applicantInputs.forEach(input => {
+                        input.disabled = false;
+                        input.closest('.input-with-delete')?.classList.remove('disabled-section');
+                    });
+                    
+                    applicantButtons.forEach(button => {
+                        button.disabled = false;
+                        button.classList.remove('disabled-section');
+                    });
+                } 
+                else if (selectedReason === 'manning') {
+                    manningSection.classList.remove('disabled-section');
+                    
+                    const manningInputs = manningSection.querySelectorAll('input:not([type="radio"])');
+                    const manningButtons = manningSection.querySelectorAll('button:not(.reason-radio)');
+                    
+                    manningInputs.forEach(input => {
+                        input.disabled = false;
+                        input.closest('.input-with-delete')?.classList.remove('disabled-section');
+                    });
+                    
+                    manningButtons.forEach(button => {
+                        button.disabled = false;
+                        button.classList.remove('disabled-section');
+                    });
+                } 
+                else if (selectedReason === 'others_reason') {
+                    othersReasonSection.classList.remove('disabled-section');
+                    
+                    const othersInputs = othersReasonSection.querySelectorAll('input:not([type="radio"])');
+                    const othersButtons = othersReasonSection.querySelectorAll('button:not(.reason-radio)');
+                    
+                    othersInputs.forEach(input => {
+                        input.disabled = false;
+                        input.closest('.input-with-delete')?.classList.remove('disabled-section');
+                    });
+                    
+                    othersButtons.forEach(button => {
+                        button.disabled = false;
+                        button.classList.remove('disabled-section');
+                    });
+                }
+
+                // Update comparison
+                updateReasonComparison();
+            });
+        });
+
+        // Function to calculate and display comparison
+        function updateReasonComparison() {
+            const numNeeded = parseInt(document.getElementById('num_needed').value) || 0;
+            const selectedReason = document.querySelector('input[name="reason_type"]:checked')?.value;
+            
+            if (numNeeded <= 0 || !selectedReason) {
+                document.getElementById('comparison-display').innerHTML = '';
+                document.getElementById('status-preview').innerHTML = '';
+                return;
+            }
+
+            let reasonCount = 0;
+            let comparisonText = '';
+            
+            if (selectedReason === 'replacement') {
+                // Count replacement names
+                const repNames = Array.from(document.querySelectorAll('input[name="rep_of_name[]"]'))
+                    .filter(input => input.value.trim() !== '').length;
+                
+                // Count applicant names
+                const appNames = Array.from(document.querySelectorAll('input[name="app_name[]"]'))
+                    .filter(input => input.value.trim() !== '').length;
+                
+                reasonCount = Math.min(repNames, appNames);
+                comparisonText = `${reasonCount} of ${numNeeded} replacements matched (${repNames} names vs ${appNames} applicants)`;
+                
+                // Update status preview
+                let statusText, statusClass;
+                if (numNeeded <= repNames) {
+                    statusText = 'Will be marked as: <span class="status-badge status-completed">Completed</span>';
+                } else {
+                    const remaining = numNeeded - repNames;
+                    statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
+                }
+                document.getElementById('status-preview').innerHTML = statusText;
+            } 
+            else if (selectedReason === 'manning') {
+                reasonCount = Array.from(document.querySelectorAll('input[name="manning_spec[]"]'))
+                    .filter(input => input.value.trim() !== '').length;
+                comparisonText = `${reasonCount} of ${numNeeded} manning specs filled`;
+                
+                // Update status preview
+                let statusText;
+                if (numNeeded <= reasonCount) {
+                    statusText = 'Will be marked as: <span class="status-badge status-completed">Completed</span>';
+                } else {
+                    const remaining = numNeeded - reasonCount;
+                    statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
+                }
+                document.getElementById('status-preview').innerHTML = statusText;
+            } 
+            else if (selectedReason === 'others_reason') {
+                reasonCount = Array.from(document.querySelectorAll('input[name="others_reason_spec[]"]'))
+                    .filter(input => input.value.trim() !== '').length;
+                comparisonText = `${reasonCount} of ${numNeeded} other reasons filled`;
+                
+                // Update status preview
+                let statusText;
+                if (numNeeded <= reasonCount) {
+                    statusText = 'Will be marked as: <span class="status-badge status-completed">Completed</span>';
+                } else {
+                    const remaining = numNeeded - reasonCount;
+                    statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
+                }
+                document.getElementById('status-preview').innerHTML = statusText;
+            }
+
+            // Calculate percentage
+            const percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
+            
+            // Create comparison display
+            const displayHTML = `
+                <div class="comparison-container">
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="comparison-text">
+                        ${comparisonText}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('comparison-display').innerHTML = displayHTML;
+        }
+
+        // Add event listeners to trigger comparison updates
+        document.getElementById('num_needed').addEventListener('input', updateReasonComparison);
+        
+        // Update when dynamic fields change
+        const containers = [
+            'replacement-fields', 
+            'applicant-fields', 
+            'manning-fields', 
+            'others-reason-fields'
+        ];
+        
+        containers.forEach(containerId => {
+            document.getElementById(containerId).addEventListener('input', updateReasonComparison);
+        });
+
+        // Initial update
+        updateReasonComparison();
     </script>
 </body>
 </html>
