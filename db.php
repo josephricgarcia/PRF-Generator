@@ -4,7 +4,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "prf_system";
+$dbname = "prf_db";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

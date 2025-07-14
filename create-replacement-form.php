@@ -414,43 +414,43 @@ $conn->close();
                                         <input type="checkbox" name="laptop" id="laptop" class="mr-2">
                                         <label for="laptop">Laptop/Desktop:</label>
                                     </div>
-                                    <input type="number" name="laptop_qty" class="compact-input border rounded">
+                                    <input type="number" name="laptop_qty" class="compact-input border rounded" disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="mobile" id="mobile" class="mr-2">
                                         <label for="mobile">Mobile Unit:</label>
                                     </div>
-                                    <input type="number" name="mobile_qty" class="compact-input border rounded">
+                                    <input type="number" name="mobile_qty" class="compact-input border rounded" disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="phone" id="phone" class="mr-2">
                                         <label for="phone">Phone Plan:</label>
                                     </div>
-                                    <input type="number" name="phone_qty" class="compact-input border rounded">
+                                    <input type="number" name="phone_qty" class="compact-input border rounded" disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="office" id="office" class="mr-2">
                                         <label for="office">Office/Desk Space:</label>
                                     </div>
-                                    <input type="number" name="office_qty" class="compact-input border rounded">
+                                    <input type="number" name="office_qty" class="compact-input border rounded" disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="uniform" id="uniform" class="mr-2">
                                         <label for="uniform">Uniform:</label>
                                     </div>
-                                    <input type="number" name="uniform_qty" class="compact-input border rounded">
+                                    <input type="number" name="uniform_qty" class="compact-input border rounded" disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="table" id="table" class="mr-2">
                                         <label for="table">Table:</label>
                                     </div>
-                                    <input type="number" name="table_qty" class="compact-input border rounded">
+                                    <input type="number" name="table_qty" class="compact-input border rounded" disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="chair" id="chair" class="mr-2">
                                         <label for="chair">Chair:</label>
                                     </div>
-                                    <input type="number" name="chair_qty" class="compact-input border rounded">
+                                    <input type="number" name="chair_qty" class="compact-input border rounded" disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="others_requirement" id="others_requirement" class="mr-2">
@@ -459,13 +459,13 @@ $conn->close();
                                     <div class="col-span-2">
                                         <div id="others-requirement-fields">
                                             <div class="input-with-delete">
-                                                <input type="text" name="others_requirement_spec[]" class="w-full compact-input border rounded" placeholder="Specify requirement">
-                                                <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                                                <input type="text" name="others_requirement_spec[]" class="w-full compact-input border rounded" placeholder="Specify requirement" disabled>
+                                                <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </div>
                                         </div>
-                                        <button type="button" id="addOthersRequirementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add requirement</button>
+                                        <button type="button" id="addOthersRequirementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600" disabled>Add requirement</button>
                                     </div>
                                 </div>
                             </div>
@@ -579,11 +579,16 @@ $conn->close();
                 const manningSection = document.querySelector('#manning').closest('.checkbox-group');
                 const othersReasonSection = document.querySelector('#others_reason').closest('.checkbox-group');
                 
-                // Reset all sections first
+                // Reset all sections' border colors and disabled states
                 [replacementSection, applicantSection, manningSection, othersReasonSection].forEach(section => {
                     const inputs = section.querySelectorAll('input:not([type="radio"])');
                     const buttons = section.querySelectorAll('button:not(.reason-radio)');
                     
+                    // Set border color to gray
+                    section.classList.remove('border-orange-500');
+                    section.classList.add('border-gray-300');
+                    
+                    // Disable inputs and buttons
                     inputs.forEach(input => {
                         input.disabled = true;
                         input.closest('.input-with-delete')?.classList.add('disabled-section');
@@ -597,10 +602,12 @@ $conn->close();
                     section.classList.add('disabled-section');
                 });
                 
-                // Enable selected section
+                // Enable selected section and set orange border
                 if (selectedReason === 'replacement') {
-                    replacementSection.classList.remove('disabled-section');
-                    applicantSection.classList.remove('disabled-section');
+                    replacementSection.classList.remove('disabled-section', 'border-gray-300');
+                    replacementSection.classList.add('border-orange-500');
+                    applicantSection.classList.remove('disabled-section', 'border-gray-300');
+                    applicantSection.classList.add('border-orange-500');
                     
                     const replacementInputs = replacementSection.querySelectorAll('input:not([type="radio"])');
                     const replacementButtons = replacementSection.querySelectorAll('button:not(.reason-radio)');
@@ -628,7 +635,8 @@ $conn->close();
                     });
                 } 
                 else if (selectedReason === 'manning') {
-                    manningSection.classList.remove('disabled-section');
+                    manningSection.classList.remove('disabled-section', 'border-gray-300');
+                    manningSection.classList.add('border-orange-500');
                     
                     const manningInputs = manningSection.querySelectorAll('input:not([type="radio"])');
                     const manningButtons = manningSection.querySelectorAll('button:not(.reason-radio)');
@@ -644,7 +652,8 @@ $conn->close();
                     });
                 } 
                 else if (selectedReason === 'others_reason') {
-                    othersReasonSection.classList.remove('disabled-section');
+                    othersReasonSection.classList.remove('disabled-section', 'border-gray-300');
+                    othersReasonSection.classList.add('border-orange-500');
                     
                     const othersInputs = othersReasonSection.querySelectorAll('input:not([type="radio"])');
                     const othersButtons = othersReasonSection.querySelectorAll('button:not(.reason-radio)');
@@ -677,6 +686,7 @@ $conn->close();
             }
 
             let reasonCount = 0;
+grades
             let comparisonText = '';
             
             if (selectedReason === 'replacement') {
@@ -749,6 +759,47 @@ $conn->close();
             
             document.getElementById('comparison-display').innerHTML = displayHTML;
         }
+
+        // Toggle quantity fields based on checkbox state
+        function toggleQuantityInput(checkboxId, inputName) {
+            const checkbox = document.getElementById(checkboxId);
+            const input = document.querySelector(`input[name="${inputName}"]`);
+            
+            checkbox.addEventListener('change', function() {
+                input.disabled = !this.checked;
+                if (this.checked) {
+                    input.focus();
+                }
+            });
+        }
+
+        // Set up all requirement toggles
+        toggleQuantityInput('laptop', 'laptop_qty');
+        toggleQuantityInput('mobile', 'mobile_qty');
+        toggleQuantityInput('phone', 'phone_qty');
+        toggleQuantityInput('office', 'office_qty');
+        toggleQuantityInput('uniform', 'uniform_qty');
+        toggleQuantityInput('table', 'table_qty');
+        toggleQuantityInput('chair', 'chair_qty');
+
+        // Handle others requirement toggle
+        document.getElementById('others_requirement').addEventListener('change', function() {
+            const isChecked = this.checked;
+            const othersInputs = document.querySelectorAll('input[name="others_requirement_spec[]"]');
+            const othersButtons = document.querySelectorAll('#others-requirement-fields .delete-field-btn, #addOthersRequirementField');
+            
+            othersInputs.forEach(input => {
+                input.disabled = !isChecked;
+            });
+            
+            othersButtons.forEach(button => {
+                button.disabled = !isChecked;
+            });
+            
+            if (isChecked && othersInputs.length === 0) {
+                document.getElementById('addOthersRequirementField').click();
+            }
+        });
 
         // Add event listeners to trigger comparison updates
         document.getElementById('num_needed').addEventListener('input', updateReasonComparison);
