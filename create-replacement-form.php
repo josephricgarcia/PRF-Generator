@@ -92,7 +92,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CREATE PRF-REPLACEMENT FORM</title>
+    <title>CREATE REPLACEMENT FORM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -253,13 +253,13 @@ $conn->close();
                         <li>
                             <a href="create-replacement-form.php" class="flex items-center space-x-2 p-2 rounded bg-white text-orange-600">
                                 <i class="fas fa-file-alt w-4"></i>
-                                <span class="text-sm">Create PRF-Replacement</span>
+                                <span class="text-sm">Create Replacement Form</span>
                             </a>
                         </li>
                         <li>
                             <a href="create-oncall-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
                                 <i class="fas fa-file-alt w-4"></i>
-                                <span class="text-sm">Create PRF-On Call</span>
+                                <span class="text-sm">Create On Call Form</span>
                             </a>
                         </li>
                     </ul>
@@ -274,7 +274,7 @@ $conn->close();
                         <button id="mobileSidebarToggle" class="md:hidden mr-3">
                             <i class="fas fa-bars text-gray-600"></i>
                         </button>
-                        <h1 class="text-lg font-semibold text-gray-800">Create PRF-Replacement Form</h1>
+                        <h1 class="text-lg font-semibold text-gray-800">Create Replacement Form</h1>
                     </div>
                 </div>
             </header>
@@ -320,34 +320,34 @@ $conn->close();
                                 <div class="section-title">Reason for Request:</div>
                                 
                                 <!-- Replacement of Section with nested Applicant Names -->
-                                <div class="checkbox-group border-l-2 border-orange-500 pl-4 mb-4">
+                                <div class="checkbox-group border-l-2 border-gray-300 pl-4 mb-4 disabled-section">
                                     <div class="flex items-center text-sm mb-2">
-                                        <input type="radio" name="reason_type" id="replacement" value="replacement" class="mr-2 reason-radio" checked>
+                                        <input type="radio" name="reason_type" id="replacement" value="replacement" class="mr-2 reason-radio">
                                         <label for="replacement" class="font-medium">Replacement of:</label>
                                     </div>
                                     
                                     <div id="replacement-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded" placeholder="Specify name">
-                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                                            <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded" placeholder="Specify name" disabled>
+                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <button type="button" id="addReplacementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600 ml-6">Add name</button>
+                                    <button type="button" id="addReplacementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600 ml-6" disabled>Add name</button>
                                     
                                     <!-- Applicant Names nested under Replacement -->
-                                    <div class="nested-section">
+                                    <div class="nested-section disabled-section">
                                         <label class="block compact-label">Applicant Name(s):</label>
                                         <div id="applicant-fields">
                                             <div class="input-with-delete">
-                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded" placeholder="Specify applicant">
-                                                <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded" placeholder="Specify applicant" disabled>
+                                                <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </div>
                                         </div>
-                                        <button type="button" id="addApplicantField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add applicant</button>
+                                        <button type="button" id="addApplicantField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600" disabled>Add applicant</button>
                                     </div>
                                 </div>
 
@@ -686,7 +686,6 @@ $conn->close();
             }
 
             let reasonCount = 0;
-grades
             let comparisonText = '';
             
             if (selectedReason === 'replacement') {
@@ -816,8 +815,35 @@ grades
             document.getElementById(containerId).addEventListener('input', updateReasonComparison);
         });
 
-        // Initial update
-        updateReasonComparison();
+        // Initialize form with no reason selected
+        document.addEventListener('DOMContentLoaded', () => {
+            const replacementSection = document.querySelector('#replacement').closest('.checkbox-group');
+            const applicantSection = document.querySelector('#applicant-fields').closest('.nested-section');
+            const manningSection = document.querySelector('#manning').closest('.checkbox-group');
+            const othersReasonSection = document.querySelector('#others_reason').closest('.checkbox-group');
+
+            // Ensure all sections are disabled by default
+            [replacementSection, applicantSection, manningSection, othersReasonSection].forEach(section => {
+                section.classList.add('disabled-section', 'border-gray-300');
+                section.classList.remove('border-orange-500');
+                
+                const inputs = section.querySelectorAll('input:not([type="radio"])');
+                const buttons = section.querySelectorAll('button:not(.reason-radio)');
+
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    input.closest('.input-with-delete')?.classList.add('disabled-section');
+                });
+
+                buttons.forEach(button => {
+                    button.disabled = true;
+                    button.classList.add('disabled-section');
+                });
+            });
+
+            // Clear comparison display initially
+            updateReasonComparison();
+        });
     </script>
 </body>
 </html>
