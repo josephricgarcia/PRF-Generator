@@ -43,10 +43,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // Determine status based on number needed vs replacements provided
     $rep_count = count(json_decode($rep_of_names, true));
-    if ($num_needed <= $rep_count) {
+    $app_count = count(json_decode($app_names, true));
+
+    if ($replacement && $num_needed <= $rep_count && $num_needed <= $app_count) {
+        $status = 'completed';
+    } elseif ($manning && $num_needed <= count(json_decode($manning_specs, true))) {
+        $status = 'completed';
+    } elseif ($others_reason && $num_needed <= count(json_decode($others_reason_specs, true))) {
         $status = 'completed';
     } else {
-        $remaining = $num_needed - $rep_count;
+        if ($replacement) {
+            $remaining = max($num_needed - $rep_count, $num_needed - $app_count);
+        } elseif ($manning) {
+            $remaining = $num_needed - count(json_decode($manning_specs, true));
+        } else {
+            $remaining = $num_needed - count(json_decode($others_reason_specs, true));
+        }
         $status = "pending (lacking $remaining needed)";
     }
     
@@ -92,7 +104,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CREATE ONCALL FORM</title>
+    <title>CREATE ON CALL FORM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -320,34 +332,34 @@ $conn->close();
                                 <div class="section-title">Reason for Request:</div>
                                 
                                 <!-- Replacement of Section with nested Applicant Names -->
-                                <div class="checkbox-group border-l-2 border-orange-500 pl-4 mb-4">
+                                <div class="checkbox-group border-l-2 border-gray-300 pl-4 mb-4 disabled-section">
                                     <div class="flex items-center text-sm mb-2">
-                                        <input type="radio" name="reason_type" id="replacement" value="replacement" class="mr-2 reason-radio" checked>
+                                        <input type="radio" name="reason_type" id="replacement" value="replacement" class="mr-2 reason-radio">
                                         <label for="replacement" class="font-medium">Replacement of:</label>
                                     </div>
                                     
                                     <div id="replacement-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded" placeholder="Specify name">
-                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                                            <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded" placeholder="Specify name" disabled>
+                                            <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <button type="button" id="addReplacementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600 ml-6">Add name</button>
+                                    <button type="button" id="addReplacementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600 ml-6" disabled>Add name</button>
                                     
                                     <!-- Applicant Names nested under Replacement -->
-                                    <div class="nested-section">
+                                    <div class="nested-section disabled-section">
                                         <label class="block compact-label">Applicant Name(s):</label>
                                         <div id="applicant-fields">
                                             <div class="input-with-delete">
-                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded" placeholder="Specify applicant">
-                                                <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600">
+                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded" placeholder="Specify applicant" disabled>
+                                                <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </div>
                                         </div>
-                                        <button type="button" id="addApplicantField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600">Add applicant</button>
+                                        <button type="button" id="addApplicantField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600" disabled>Add applicant</button>
                                     </div>
                                 </div>
 
@@ -686,7 +698,6 @@ $conn->close();
             }
 
             let reasonCount = 0;
-grades
             let comparisonText = '';
             
             if (selectedReason === 'replacement') {
@@ -698,23 +709,22 @@ grades
                 const appNames = Array.from(document.querySelectorAll('input[name="app_name[]"]'))
                     .filter(input => input.value.trim() !== '').length;
                 
-                reasonCount = Math.min(repNames, appNames);
-                comparisonText = `${reasonCount} of ${numNeeded} replacements matched (${repNames} names vs ${appNames} applicants)`;
-                
                 // Update status preview
-                let statusText, statusClass;
-                if (numNeeded <= repNames) {
+                let statusText;
+                if (numNeeded <= repNames && numNeeded <= appNames) {
                     statusText = 'Will be marked as: <span class="status-badge status-completed">Completed</span>';
                 } else {
-                    const remaining = numNeeded - repNames;
+                    const remaining = Math.max(numNeeded - repNames, numNeeded - appNames);
                     statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
                 }
+                
+                // Show detailed comparison
+                comparisonText = `Names: ${repNames}, Applicants: ${appNames}, Needed: ${numNeeded}`;
                 document.getElementById('status-preview').innerHTML = statusText;
             } 
             else if (selectedReason === 'manning') {
                 reasonCount = Array.from(document.querySelectorAll('input[name="manning_spec[]"]'))
                     .filter(input => input.value.trim() !== '').length;
-                comparisonText = `${reasonCount} of ${numNeeded} manning specs filled`;
                 
                 // Update status preview
                 let statusText;
@@ -724,12 +734,13 @@ grades
                     const remaining = numNeeded - reasonCount;
                     statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
                 }
+                
+                comparisonText = `Specs: ${reasonCount}, Needed: ${numNeeded}`;
                 document.getElementById('status-preview').innerHTML = statusText;
             } 
             else if (selectedReason === 'others_reason') {
                 reasonCount = Array.from(document.querySelectorAll('input[name="others_reason_spec[]"]'))
                     .filter(input => input.value.trim() !== '').length;
-                comparisonText = `${reasonCount} of ${numNeeded} other reasons filled`;
                 
                 // Update status preview
                 let statusText;
@@ -739,11 +750,22 @@ grades
                     const remaining = numNeeded - reasonCount;
                     statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
                 }
+                
+                comparisonText = `Reasons: ${reasonCount}, Needed: ${numNeeded}`;
                 document.getElementById('status-preview').innerHTML = statusText;
             }
 
-            // Calculate percentage
-            const percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
+            // Calculate percentage based on the most limiting factor
+            let percentage;
+            if (selectedReason === 'replacement') {
+                const repNames = Array.from(document.querySelectorAll('input[name="rep_of_name[]"]'))
+                    .filter(input => input.value.trim() !== '').length;
+                const appNames = Array.from(document.querySelectorAll('input[name="app_name[]"]'))
+                    .filter(input => input.value.trim() !== '').length;
+                percentage = Math.min(100, Math.round((Math.min(repNames, appNames) / numNeeded) * 100));
+            } else {
+                percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
+            }
             
             // Create comparison display
             const displayHTML = `
@@ -816,8 +838,35 @@ grades
             document.getElementById(containerId).addEventListener('input', updateReasonComparison);
         });
 
-        // Initial update
-        updateReasonComparison();
+        // Initialize form with no reason selected
+        document.addEventListener('DOMContentLoaded', () => {
+            const replacementSection = document.querySelector('#replacement').closest('.checkbox-group');
+            const applicantSection = document.querySelector('#applicant-fields').closest('.nested-section');
+            const manningSection = document.querySelector('#manning').closest('.checkbox-group');
+            const othersReasonSection = document.querySelector('#others_reason').closest('.checkbox-group');
+
+            // Ensure all sections are disabled by default
+            [replacementSection, applicantSection, manningSection, othersReasonSection].forEach(section => {
+                section.classList.add('disabled-section', 'border-gray-300');
+                section.classList.remove('border-orange-500');
+                
+                const inputs = section.querySelectorAll('input:not([type="radio"])');
+                const buttons = section.querySelectorAll('button:not(.reason-radio)');
+
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    input.closest('.input-with-delete')?.classList.add('disabled-section');
+                });
+
+                buttons.forEach(button => {
+                    button.disabled = true;
+                    button.classList.add('disabled-section');
+                });
+            });
+
+            // Clear comparison display initially
+            updateReasonComparison();
+        });
     </script>
 </body>
 </html>

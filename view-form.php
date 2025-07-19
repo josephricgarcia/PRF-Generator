@@ -1,3 +1,34 @@
+<?php
+include 'db.php'; // Include database connection
+
+// Fetch data from both tables
+$query = "SELECT 
+            'replacement' AS form_type, 
+            prf_no, 
+            position_title AS file_name, 
+            status, 
+            date_requested AS date 
+          FROM replacement_forms
+          UNION ALL
+          SELECT 
+            'oncall' AS form_type, 
+            prf_no, 
+            position_title AS file_name, 
+            status, 
+            date_requested AS date 
+          FROM oncall_forms
+          ORDER BY date DESC";
+
+$result = $conn->query($query);
+$forms = [];
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        $forms[] = $row;
+    }
+}
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -146,121 +177,55 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
+                                <?php foreach ($forms as $form): 
+                                    $statusClass = '';
+                                    $statusText = $form['status'];
+                                    
+                                    if (strpos($statusText, 'completed') !== false) {
+                                        $statusClass = 'bg-green-100 text-green-800';
+                                    } elseif (strpos($statusText, 'pending') !== false) {
+                                        $statusClass = 'bg-yellow-100 text-yellow-800';
+                                    } elseif (strpos($statusText, 'rejected') !== false) {
+                                        $statusClass = 'bg-red-100 text-red-800';
+                                    } elseif (strpos($statusText, 'in review') !== false) {
+                                        $statusClass = 'bg-blue-100 text-blue-800';
+                                    }
+                                    
+                                    $formattedDate = date('d M Y', strtotime($form['date']));
+                                ?>
                                 <tr>
-                                    <td class="table-cell whitespace-nowrap font-medium text-gray-900">PRF-2023-003</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">Marketing Specialist</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">On Call</td>
-                                    <td class="table-cell whitespace-nowrap">
-                                        <span class="status-badge inline-flex rounded-full bg-red-100 text-red-800">Rejected</span>
+                                    <td class="table-cell whitespace-nowrap font-medium text-gray-900"><?php echo htmlspecialchars($form['prf_no']); ?></td>
+                                    <td class="table-cell whitespace-nowrap text-gray-500"><?php echo htmlspecialchars($form['file_name']); ?></td>
+                                    <td class="table-cell whitespace-nowrap text-gray-500">
+                                        <?php echo ucfirst($form['form_type']); ?>
                                     </td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">25 Jun 2023</td>
+                                    <td class="table-cell whitespace-nowrap">
+                                        <span class="status-badge inline-flex rounded-full <?php echo $statusClass; ?>">
+                                            <?php echo ucfirst($statusText); ?>
+                                        </span>
+                                    </td>
+                                    <td class="table-cell whitespace-nowrap text-gray-500"><?php echo $formattedDate; ?></td>
                                     <td class="table-cell whitespace-nowrap font-medium action-links">
-                                        <a href="preview-form.php" class="text-orange-600 hover:text-orange-800 view-file">
+                                        <a href="preview-form.php?id=<?php echo urlencode($form['prf_no']); ?>&type=<?php echo $form['form_type']; ?>" class="text-orange-600 hover:text-orange-800 view-file">
                                             <i class="fas fa-eye"></i>
                                             <span>View</span>
                                         </a>
-                                        <a href="update-form.php" class="text-orange-600 hover:text-orange-800">
+                                        <a href="update-form.php?id=<?php echo urlencode($form['prf_no']); ?>&type=<?php echo $form['form_type']; ?>" class="text-orange-600 hover:text-orange-800">
                                             <i class="fas fa-edit"></i>
                                             <span>Update</span>
                                         </a>
-                                        <a href="#" class="text-orange-600 hover:text-orange-800">
+                                        <a href="#" class="text-orange-600 hover:text-orange-800 delete-form" data-id="<?php echo htmlspecialchars($form['prf_no']); ?>" data-type="<?php echo htmlspecialchars($form['form_type']); ?>">
                                             <i class="fas fa-trash"></i>
                                             <span>Delete</span>
                                         </a>
                                     </td>
                                 </tr>
+                                <?php endforeach; ?>
+                                <?php if (empty($forms)): ?>
                                 <tr>
-                                    <td class="table-cell whitespace-nowrap font-medium text-gray-900">PRF-2023-004</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">Senior Developer</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">Replacement</td>
-                                    <td class="table-cell whitespace-nowrap">
-                                        <span class="status-badge inline-flex rounded-full bg-green-100 text-green-800">Approved</span>
-                                    </td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">28 Jun 2023</td>
-                                    <td class="table-cell whitespace-nowrap font-medium action-links">
-                                        <a href="preview-form.php" class="text-orange-600 hover:text-orange-800 view-file">
-                                            <i class="fas fa-eye"></i>
-                                            <span>View</span>
-                                        </a>
-                                        <a href="update-form.php" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-edit"></i>
-                                            <span>Update</span>
-                                        </a>
-                                        <a href="#" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-trash"></i>
-                                            <span>Delete</span>
-                                        </a>
-                                    </td>
+                                    <td colspan="6" class="table-cell text-center py-4 text-gray-500">No PRF forms found</td>
                                 </tr>
-                                <tr>
-                                    <td class="table-cell whitespace-nowrap font-medium text-gray-900">PRF-2023-005</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">Project Manager</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">On Call</td>
-                                    <td class="table-cell whitespace-nowrap">
-                                        <span class="status-badge inline-flex rounded-full bg-yellow-100 text-yellow-800">Pending</span>
-                                    </td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">30 Jun 2023</td>
-                                    <td class="table-cell whitespace-nowrap font-medium action-links">
-                                        <a href="preview-form.php" class="text-orange-600 hover:text-orange-800 view-file">
-                                            <i class="fas fa-eye"></i>
-                                            <span>View</span>
-                                        </a>
-                                        <a href="update-form.php" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-edit"></i>
-                                            <span>Update</span>
-                                        </a>
-                                        <a href="#" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-trash"></i>
-                                            <span>Delete</span>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="table-cell whitespace-nowrap font-medium text-gray-900">PRF-2023-006</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">HR Coordinator</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">Replacement</td>
-                                    <td class="table-cell whitespace-nowrap">
-                                        <span class="status-badge inline-flex rounded-full bg-blue-100 text-blue-800">In Review</span>
-                                    </td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">1 Jul 2023</td>
-                                    <td class="table-cell whitespace-nowrap font-medium action-links">
-                                        <a href="preview-form.php" class="text-orange-600 hover:text-orange-800 view-file">
-                                            <i class="fas fa-eye"></i>
-                                            <span>View</span>
-                                        </a>
-                                        <a href="update-form.php" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-edit"></i>
-                                            <span>Update</span>
-                                        </a>
-                                        <a href="#" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-trash"></i>
-                                            <span>Delete</span>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="table-cell whitespace-nowrap font-medium text-gray-900">PRF-2023-007</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">Financial Analyst</td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">On Call</td>
-                                    <td class="table-cell whitespace-nowrap">
-                                        <span class="status-badge inline-flex rounded-full bg-green-100 text-green-800">Approved</span>
-                                    </td>
-                                    <td class="table-cell whitespace-nowrap text-gray-500">3 Jul 2023</td>
-                                    <td class="table-cell whitespace-nowrap font-medium action-links">
-                                        <a href="preview-form.php" class="text-orange-600 hover:text-orange-800 view-file">
-                                            <i class="fas fa-eye"></i>
-                                            <span>View</span>
-                                        </a>
-                                        <a href="update-form.php" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-edit"></i>
-                                            <span>Update</span>
-                                        </a>
-                                        <a href="#" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-trash"></i>
-                                            <span>Delete</span>
-                                        </a>
-                                    </td>
-                                </tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -277,6 +242,63 @@
 
         document.getElementById('sidebarToggle').addEventListener('click', function() {
             document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Handle delete button clicks
+        document.querySelectorAll('.delete-form').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const prfNo = this.getAttribute('data-id');
+                const formType = this.getAttribute('data-type');
+                
+                if (confirm(`Are you sure you want to delete PRF ${prfNo}?`)) {
+                    fetch('delete-form.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `id=${encodeURIComponent(prfNo)}&type=${encodeURIComponent(formType)}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            window.location.reload();
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while deleting the form.');
+                    });
+                }
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const prfNo = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+                const fileName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const prfType = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                const status = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                const date = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
+                
+                if (prfNo.includes(searchTerm) || 
+                    fileName.includes(searchTerm) || 
+                    prfType.includes(searchTerm) || 
+                    status.includes(searchTerm) || 
+                    date.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         });
     </script>
 </body>

@@ -697,23 +697,22 @@ $conn->close();
                 const appNames = Array.from(document.querySelectorAll('input[name="app_name[]"]'))
                     .filter(input => input.value.trim() !== '').length;
                 
-                reasonCount = Math.min(repNames, appNames);
-                comparisonText = `${reasonCount} of ${numNeeded} replacements matched (${repNames} names vs ${appNames} applicants)`;
-                
                 // Update status preview
-                let statusText, statusClass;
-                if (numNeeded <= repNames) {
+                let statusText;
+                if (numNeeded <= repNames && numNeeded <= appNames) {
                     statusText = 'Will be marked as: <span class="status-badge status-completed">Completed</span>';
                 } else {
-                    const remaining = numNeeded - repNames;
+                    const remaining = Math.max(numNeeded - repNames, numNeeded - appNames);
                     statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
                 }
+                
+                // Show detailed comparison
+                comparisonText = `Names: ${repNames}, Applicants: ${appNames}, Needed: ${numNeeded}`;
                 document.getElementById('status-preview').innerHTML = statusText;
             } 
             else if (selectedReason === 'manning') {
                 reasonCount = Array.from(document.querySelectorAll('input[name="manning_spec[]"]'))
                     .filter(input => input.value.trim() !== '').length;
-                comparisonText = `${reasonCount} of ${numNeeded} manning specs filled`;
                 
                 // Update status preview
                 let statusText;
@@ -723,12 +722,13 @@ $conn->close();
                     const remaining = numNeeded - reasonCount;
                     statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
                 }
+                
+                comparisonText = `Specs: ${reasonCount}, Needed: ${numNeeded}`;
                 document.getElementById('status-preview').innerHTML = statusText;
             } 
             else if (selectedReason === 'others_reason') {
                 reasonCount = Array.from(document.querySelectorAll('input[name="others_reason_spec[]"]'))
                     .filter(input => input.value.trim() !== '').length;
-                comparisonText = `${reasonCount} of ${numNeeded} other reasons filled`;
                 
                 // Update status preview
                 let statusText;
@@ -738,11 +738,22 @@ $conn->close();
                     const remaining = numNeeded - reasonCount;
                     statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
                 }
+                
+                comparisonText = `Reasons: ${reasonCount}, Needed: ${numNeeded}`;
                 document.getElementById('status-preview').innerHTML = statusText;
             }
 
-            // Calculate percentage
-            const percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
+            // Calculate percentage based on the most limiting factor
+            let percentage;
+            if (selectedReason === 'replacement') {
+                const repNames = Array.from(document.querySelectorAll('input[name="rep_of_name[]"]'))
+                    .filter(input => input.value.trim() !== '').length;
+                const appNames = Array.from(document.querySelectorAll('input[name="app_name[]"]'))
+                    .filter(input => input.value.trim() !== '').length;
+                percentage = Math.min(100, Math.round((Math.min(repNames, appNames) / numNeeded) * 100));
+            } else {
+                percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
+            }
             
             // Create comparison display
             const displayHTML = `
