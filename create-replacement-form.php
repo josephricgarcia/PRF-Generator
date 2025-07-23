@@ -83,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         status
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
-    $stmt->bind_param("ssssisssissssiiiiiiiiiiiiiiiiis", 
+    $stmt->bind_param("ssssissssssssiiiiiiiiiiiiiiiiis", 
         $prf, $pos, $rep, $job,
         $replacement, $rep_of_names, $app_names,
         $manning, $manning_specs, $others_reason, $others_reason_specs,
@@ -106,6 +106,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 $conn->close();
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -271,6 +274,12 @@ $conn->close();
                             </a>
                         </li>
                         <li>
+                            <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
+                                <i class="fas fa-file w-4"></i>
+                                <span class="text-sm">View Scanned Documents</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="create-replacement-form.php" class="flex items-center space-x-2 p-2 rounded bg-white text-orange-600">
                                 <i class="fas fa-file-alt w-4"></i>
                                 <span class="text-sm">Create Replacement Form</span>
@@ -319,22 +328,22 @@ $conn->close();
                             <div class="space-y-3">
                                 <div class="form-group">
                                     <label for="prf" class="block compact-label">PRF No:</label>
-                                    <input type="text" id="prf" name="prf" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="prf" name="prf" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="pos" class="block compact-label">Position Title:</label>
-                                    <input type="text" id="pos" name="pos" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="pos" name="pos" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="rep" class="block compact-label">Reports to:</label>
-                                    <input type="text" id="rep" name="rep" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="rep" name="rep" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="job" class="block compact-label">Job Level:</label>
-                                    <input type="text" id="job" name="job" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="job" name="job" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="section-title">Reason for Request:</div>
@@ -348,7 +357,7 @@ $conn->close();
                                     
                                     <div id="replacement-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded" placeholder="Specify name" disabled>
+                                            <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify name" disabled>
                                             <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
@@ -361,7 +370,7 @@ $conn->close();
                                         <label class="block compact-label">Applicant Name(s):</label>
                                         <div id="applicant-fields">
                                             <div class="input-with-delete">
-                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded" placeholder="Specify applicant" disabled>
+                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify applicant" disabled>
                                                 <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
@@ -380,7 +389,7 @@ $conn->close();
                                     
                                     <div id="manning-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="manning_spec[]" class="w-full compact-input border rounded" placeholder="Specify manning" disabled>
+                                            <input type="text" name="manning_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify manning" disabled required>
                                             <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
@@ -398,7 +407,7 @@ $conn->close();
                                     
                                     <div id="others-reason-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="others_reason_spec[]" class="w-full compact-input border rounded" placeholder="Specify reason" disabled>
+                                            <input type="text" name="others_reason_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify reason" disabled required>
                                             <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
@@ -412,17 +421,17 @@ $conn->close();
                             <div class="space-y-3">
                                 <div class="form-group">
                                     <label for="date_req" class="block compact-label">Date Requested:</label>
-                                    <input type="date" id="date_req" name="date_req" class="w-full compact-input border rounded" required>
+                                    <input type="date" id="date_req" name="date_req" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="date_needed" class="block compact-label">Date Needed:</label>
-                                    <input type="date" id="date_needed" name="date_needed" class="w-full compact-input border rounded" required>
+                                    <input type="date" id="date_needed" name="date_needed" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="num_needed" class="block compact-label">Number Needed:</label>
-                                    <input type="number" id="num_needed" name="num_needed" min="1" class="w-full compact-input border rounded" required>
+                                    <input type="number" id="num_needed" name="num_needed" min="1" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                     <div id="comparison-display" class="mt-1"></div>
                                     <div id="status-preview" class="mt-1 text-sm"></div>
                                 </div>
@@ -434,43 +443,42 @@ $conn->close();
                                         <input type="checkbox" name="laptop" id="laptop" class="mr-2">
                                         <label for="laptop">Laptop/Desktop:</label>
                                     </div>
-                                    <input type="number" name="laptop_qty" class="compact-input border rounded" disabled>
-                                    
+                                    <input type="number" name="laptop_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     <div class="flex items-center">
                                         <input type="checkbox" name="mobile" id="mobile" class="mr-2">
                                         <label for="mobile">Mobile Unit:</label>
                                     </div>
-                                    <input type="number" name="mobile_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="mobile_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="phone" id="phone" class="mr-2">
                                         <label for="phone">Phone Plan:</label>
                                     </div>
-                                    <input type="number" name="phone_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="phone_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="office" id="office" class="mr-2">
                                         <label for="office">Office/Desk Space:</label>
                                     </div>
-                                    <input type="number" name="office_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="office_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="uniform" id="uniform" class="mr-2">
                                         <label for="uniform">Uniform:</label>
                                     </div>
-                                    <input type="number" name="uniform_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="uniform_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="table" id="table" class="mr-2">
                                         <label for="table">Table:</label>
                                     </div>
-                                    <input type="number" name="table_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="table_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="chair" id="chair" class="mr-2">
                                         <label for="chair">Chair:</label>
                                     </div>
-                                    <input type="number" name="chair_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="chair_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="others_requirement" id="others_requirement" class="mr-2">
@@ -479,7 +487,7 @@ $conn->close();
                                     <div class="col-span-2">
                                         <div id="others-requirement-fields">
                                             <div class="input-with-delete">
-                                                <input type="text" name="others_requirement_spec[]" class="w-full compact-input border rounded" placeholder="Specify requirement" disabled>
+                                                <input type="text" name="others_requirement_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled placeholder="Specify requirement">
                                                 <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>

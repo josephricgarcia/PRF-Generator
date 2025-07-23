@@ -13,9 +13,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $num_needed = intval($_POST['num_needed']);
     
     // Checkbox values (1 for checked, 0 for unchecked)
-    $replacement = isset($_POST['replacement']) ? 1 : 0;
-    $manning = isset($_POST['manning']) ? 1 : 0;
-    $others_reason = isset($_POST['others_reason']) ? 1 : 0;
+    $replacement = isset($_POST['reason_type']) && $_POST['reason_type'] === 'replacement' ? 1 : 0;
+    $manning = isset($_POST['reason_type']) && $_POST['reason_type'] === 'manning' ? 1 : 0;
+    $others_reason = isset($_POST['reason_type']) && $_POST['reason_type'] === 'others_reason' ? 1 : 0;
     $laptop = isset($_POST['laptop']) ? 1 : 0;
     $mobile = isset($_POST['mobile']) ? 1 : 0;
     $phone = isset($_POST['phone']) ? 1 : 0;
@@ -35,31 +35,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $chair_qty = isset($_POST['chair_qty']) ? intval($_POST['chair_qty']) : 0;
     
     // Process array fields
-    $rep_of_names = isset($_POST['rep_of_name']) ? json_encode($_POST['rep_of_name']) : json_encode([]);
-    $app_names = isset($_POST['app_name']) ? json_encode($_POST['app_name']) : json_encode([]);
-    $manning_specs = isset($_POST['manning_spec']) ? json_encode($_POST['manning_spec']) : json_encode([]);
-    $others_reason_specs = isset($_POST['others_reason_spec']) ? json_encode($_POST['others_reason_spec']) : json_encode([]);
-    $others_requirement_specs = isset($_POST['others_requirement_spec']) ? json_encode($_POST['others_requirement_spec']) : json_encode([]);
+    $rep_of_names = isset($_POST['rep_of_name']) ? json_encode(array_filter($_POST['rep_of_name'], 'strlen')) : json_encode([]);
+    $app_names = isset($_POST['app_name']) ? json_encode(array_filter($_POST['app_name'], 'strlen')) : json_encode([]);
+    $manning_specs = isset($_POST['manning_spec']) ? json_encode(array_filter($_POST['manning_spec'], 'strlen')) : json_encode([]);
+    $others_reason_specs = isset($_POST['others_reason_spec']) ? json_encode(array_filter($_POST['others_reason_spec'], 'strlen')) : json_encode([]);
+    $others_requirement_specs = isset($_POST['others_requirement_spec']) ? json_encode(array_filter($_POST['others_requirement_spec'], 'strlen')) : json_encode([]);
     
-    // Determine status based on number needed vs replacements provided
-    $rep_count = count(json_decode($rep_of_names, true));
-    $app_count = count(json_decode($app_names, true));
-
-    if ($replacement && $num_needed <= $rep_count && $num_needed <= $app_count) {
-        $status = 'completed';
-    } elseif ($manning && $num_needed <= count(json_decode($manning_specs, true))) {
-        $status = 'completed';
-    } elseif ($others_reason && $num_needed <= count(json_decode($others_reason_specs, true))) {
-        $status = 'completed';
-    } else {
-        if ($replacement) {
-            $remaining = max($num_needed - $rep_count, $num_needed - $app_count);
-        } elseif ($manning) {
-            $remaining = $num_needed - count(json_decode($manning_specs, true));
+    // Determine status based on number needed vs provided inputs
+    $status = 'pending';
+    if ($replacement) {
+        $rep_count = count(json_decode($rep_of_names, true));
+        $app_count = count(json_decode($app_names, true));
+        if ($num_needed <= $rep_count && $num_needed <= $app_count) {
+            $status = 'completed';
         } else {
-            $remaining = $num_needed - count(json_decode($others_reason_specs, true));
+            $remaining = max($num_needed - $rep_count, $num_needed - $app_count);
+            $status = "pending (lacking $remaining needed)";
         }
-        $status = "pending (lacking $remaining needed)";
+    } elseif ($manning) {
+        $manning_count = count(json_decode($manning_specs, true));
+        if ($num_needed <= $manning_count) {
+            $status = 'completed';
+        } else {
+            $remaining = $num_needed - $manning_count;
+            $status = "pending (lacking $remaining needed)";
+        }
+    } elseif ($others_reason) {
+        $others_count = count(json_decode($others_reason_specs, true));
+        if ($num_needed <= $others_count) {
+            $status = 'completed';
+        } else {
+            $remaining = $num_needed - $others_count;
+            $status = "pending (lacking $remaining needed)";
+        }
     }
     
     // Prepare and bind
@@ -75,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         status
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
-    $stmt->bind_param("ssssisssissssiiiiiiiiiiiiiiiiis", 
+    $stmt->bind_param("ssssissssssssiiiiiiiiiiiiiiiiis", 
         $prf, $pos, $rep, $job,
         $replacement, $rep_of_names, $app_names,
         $manning, $manning_specs, $others_reason, $others_reason_specs,
@@ -98,6 +106,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 $conn->close();
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -263,6 +274,12 @@ $conn->close();
                             </a>
                         </li>
                         <li>
+                            <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
+                                <i class="fas fa-file w-4"></i>
+                                <span class="text-sm">View Scanned Documents</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="create-replacement-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
                                 <i class="fas fa-file-alt w-4"></i>
                                 <span class="text-sm">Create Replacement Form</span>
@@ -311,22 +328,22 @@ $conn->close();
                             <div class="space-y-3">
                                 <div class="form-group">
                                     <label for="prf" class="block compact-label">PRF No:</label>
-                                    <input type="text" id="prf" name="prf" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="prf" name="prf" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="pos" class="block compact-label">Position Title:</label>
-                                    <input type="text" id="pos" name="pos" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="pos" name="pos" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="rep" class="block compact-label">Reports to:</label>
-                                    <input type="text" id="rep" name="rep" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="rep" name="rep" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="job" class="block compact-label">Job Level:</label>
-                                    <input type="text" id="job" name="job" class="w-full compact-input border rounded" required>
+                                    <input type="text" id="job" name="job" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="section-title">Reason for Request:</div>
@@ -340,7 +357,7 @@ $conn->close();
                                     
                                     <div id="replacement-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded" placeholder="Specify name" disabled>
+                                            <input type="text" name="rep_of_name[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify name" disabled>
                                             <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
@@ -353,7 +370,7 @@ $conn->close();
                                         <label class="block compact-label">Applicant Name(s):</label>
                                         <div id="applicant-fields">
                                             <div class="input-with-delete">
-                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded" placeholder="Specify applicant" disabled>
+                                                <input type="text" name="app_name[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify applicant" disabled>
                                                 <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
@@ -372,7 +389,7 @@ $conn->close();
                                     
                                     <div id="manning-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="manning_spec[]" class="w-full compact-input border rounded" placeholder="Specify manning" disabled>
+                                            <input type="text" name="manning_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify manning" disabled required>
                                             <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
@@ -390,7 +407,7 @@ $conn->close();
                                     
                                     <div id="others-reason-fields" class="ml-6">
                                         <div class="input-with-delete">
-                                            <input type="text" name="others_reason_spec[]" class="w-full compact-input border rounded" placeholder="Specify reason" disabled>
+                                            <input type="text" name="others_reason_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify reason" disabled required>
                                             <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
@@ -404,17 +421,17 @@ $conn->close();
                             <div class="space-y-3">
                                 <div class="form-group">
                                     <label for="date_req" class="block compact-label">Date Requested:</label>
-                                    <input type="date" id="date_req" name="date_req" class="w-full compact-input border rounded" required>
+                                    <input type="date" id="date_req" name="date_req" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="date_needed" class="block compact-label">Date Needed:</label>
-                                    <input type="date" id="date_needed" name="date_needed" class="w-full compact-input border rounded" required>
+                                    <input type="date" id="date_needed" name="date_needed" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="num_needed" class="block compact-label">Number Needed:</label>
-                                    <input type="number" id="num_needed" name="num_needed" min="1" class="w-full compact-input border rounded" required>
+                                    <input type="number" id="num_needed" name="num_needed" min="1" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                     <div id="comparison-display" class="mt-1"></div>
                                     <div id="status-preview" class="mt-1 text-sm"></div>
                                 </div>
@@ -426,43 +443,42 @@ $conn->close();
                                         <input type="checkbox" name="laptop" id="laptop" class="mr-2">
                                         <label for="laptop">Laptop/Desktop:</label>
                                     </div>
-                                    <input type="number" name="laptop_qty" class="compact-input border rounded" disabled>
-                                    
+                                    <input type="number" name="laptop_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     <div class="flex items-center">
                                         <input type="checkbox" name="mobile" id="mobile" class="mr-2">
                                         <label for="mobile">Mobile Unit:</label>
                                     </div>
-                                    <input type="number" name="mobile_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="mobile_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="phone" id="phone" class="mr-2">
                                         <label for="phone">Phone Plan:</label>
                                     </div>
-                                    <input type="number" name="phone_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="phone_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="office" id="office" class="mr-2">
                                         <label for="office">Office/Desk Space:</label>
                                     </div>
-                                    <input type="number" name="office_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="office_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="uniform" id="uniform" class="mr-2">
                                         <label for="uniform">Uniform:</label>
                                     </div>
-                                    <input type="number" name="uniform_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="uniform_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="table" id="table" class="mr-2">
                                         <label for="table">Table:</label>
                                     </div>
-                                    <input type="number" name="table_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="table_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="chair" id="chair" class="mr-2">
                                         <label for="chair">Chair:</label>
                                     </div>
-                                    <input type="number" name="chair_qty" class="compact-input border rounded" disabled>
+                                    <input type="number" name="chair_qty" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="others_requirement" id="others_requirement" class="mr-2">
@@ -471,7 +487,7 @@ $conn->close();
                                     <div class="col-span-2">
                                         <div id="others-requirement-fields">
                                             <div class="input-with-delete">
-                                                <input type="text" name="others_requirement_spec[]" class="w-full compact-input border rounded" placeholder="Specify requirement" disabled>
+                                                <input type="text" name="others_requirement_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required disabled placeholder="Specify requirement">
                                                 <button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" disabled>
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>

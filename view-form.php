@@ -92,6 +92,85 @@ $conn->close();
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
         }
+        /* FAB Styles */
+        .fab-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+        }
+        .fab {
+            background-color: #f97316;
+            color: white;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        .fab:hover {
+            background-color: #ea580c;
+            transform: scale(1.1);
+        }
+        .fab.active {
+            transform: rotate(45deg);
+        }
+        .fab-menu {
+            position: absolute;
+            bottom: 4.5rem;
+            right: 0;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            width: 220px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        .fab-menu.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .fab-menu a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: #1f2937;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .fab-menu a:hover {
+            background-color: #f5f5f5;
+            color: #f97316;
+            border-left-color: #f97316;
+        }
+        .fab-menu a i {
+            margin-right: 0.75rem;
+            width: 1.25rem;
+            text-align: center;
+        }
+        .fab-menu a span {
+            font-size: 0.9rem;
+        }
+        .fab-menu::before {
+            content: '';
+            position: absolute;
+            bottom: -0.5rem;
+            right: 1rem;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid white;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -100,7 +179,7 @@ $conn->close();
         <div class="sidebar bg-orange-600 text-white flex-shrink-0">
             <div class="p-3 flex items-center justify-between border-b border-orange-500">
                 <div class="flex items-center space-x-2">
-                    <img src="images/be-logo.png" alt="Logo" class="w-8 h-8 rounded-xl object-cover ">
+                    <img src="images/be-logo.png" alt="Logo" class="w-8 h-8 rounded-xl object-cover">
                     <span class="text-lg font-bold">PRF System</span>
                 </div>
                 <button id="sidebarToggle" class="md:hidden">
@@ -121,6 +200,12 @@ $conn->close();
                             <a href="view-form.php" class="flex items-center space-x-2 p-2 rounded bg-white text-orange-600">
                                 <i class="fas fa-folder w-4"></i>
                                 <span class="text-sm">View PRF File</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
+                                <i class="fas fa-file w-4"></i>
+                                <span class="text-sm">View Scanned Documents</span>
                             </a>
                         </li>
                         <li>
@@ -214,7 +299,7 @@ $conn->close();
                                             <i class="fas fa-edit"></i>
                                             <span>Update</span>
                                         </a>
-                                        <a href="#" class="text-orange-600 hover:text-orange-800 delete-form" data-id="<?php echo htmlspecialchars($form['prf_no']); ?>" data-type="<?php echo htmlspecialchars($form['form_type']); ?>">
+                                        <a href="delete-form.php" class="text-orange-600 hover:text-orange-800 delete-form" data-id="<?php echo htmlspecialchars($form['prf_no']); ?>" data-type="<?php echo htmlspecialchars($form['form_type']); ?>">
                                             <i class="fas fa-trash"></i>
                                             <span>Delete</span>
                                         </a>
@@ -231,6 +316,27 @@ $conn->close();
                     </div>
                 </div>
             </div>
+
+            <!-- Floating Action Button -->
+            <div class="fab-container">
+                <button id="fabToggle" class="fab">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <div id="fabMenu" class="fab-menu">
+                    <a href="create-replacement-form.php">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Create Replacement Form</span>
+                    </a>
+                    <a href="create-oncall-form.php">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Create On Call Form</span>
+                    </a>
+                    <a href="upload-document.php">
+                        <i class="fas fa-scanner"></i>
+                        <span>Upload Document</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -242,6 +348,21 @@ $conn->close();
 
         document.getElementById('sidebarToggle').addEventListener('click', function() {
             document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Handle FAB toggle
+        document.getElementById('fabToggle').addEventListener('click', function() {
+            this.classList.toggle('active');
+            document.getElementById('fabMenu').classList.toggle('active');
+        });
+
+        // Close FAB menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const fabContainer = document.querySelector('.fab-container');
+            if (!fabContainer.contains(event.target)) {
+                document.getElementById('fabMenu').classList.remove('active');
+                document.getElementById('fabToggle').classList.remove('active');
+            }
         });
 
         // Handle delete button clicks

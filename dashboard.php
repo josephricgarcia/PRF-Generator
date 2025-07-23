@@ -1,3 +1,35 @@
+<?php
+include 'db.php'; // Include database connection
+
+// Fetch the 3 latest PRF forms
+$query = "SELECT 
+            'replacement' AS form_type, 
+            prf_no, 
+            position_title AS file_name, 
+            status, 
+            date_requested AS date 
+          FROM replacement_forms
+          UNION ALL
+          SELECT 
+            'oncall' AS form_type, 
+            prf_no, 
+            position_title AS file_name, 
+            status, 
+            date_requested AS date 
+          FROM oncall_forms
+          ORDER BY date DESC
+          LIMIT 3";
+
+$result = $conn->query($query);
+$forms = [];
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        $forms[] = $row;
+    }
+}
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,6 +84,12 @@
                     <a href="view-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
                         <i class="fas fa-folder w-4"></i>
                         <span class="text-sm">View PRF File</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
+                        <i class="fas fa-file w-4"></i>
+                        <span class="text-sm">View Scanned Documents</span>
                     </a>
                 </li>
                 <li>
@@ -150,54 +188,43 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRF ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRF No.</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRF-TYPE</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
+                                    <?php foreach ($forms as $form): 
+                                        $statusClass = '';
+                                        $statusText = $form['status'];
+                                        if (strpos(strtolower($statusText), 'approved') !== false || strpos(strtolower($statusText), 'completed') !== false) {
+                                            $statusClass = 'bg-green-100 text-green-800';
+                                        } elseif (strpos(strtolower($statusText), 'pending') !== false) {
+                                            $statusClass = 'bg-yellow-100 text-yellow-800';
+                                        } elseif (strpos(strtolower($statusText), 'rejected') !== false) {
+                                            $statusClass = 'bg-red-100 text-red-800';
+                                        } elseif (strpos(strtolower($statusText), 'in review') !== false) {
+                                            $statusClass = 'bg-blue-100 text-blue-800';
+                                        }
+                                        $formattedDate = date('d M Y', strtotime($form['date']));
+                                    ?>
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PRF-2023-001</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Software Engineer</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">IT</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><?php echo htmlspecialchars($form['prf_no']); ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($form['file_name']); ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo ucfirst($form['form_type']); ?></td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Approved</span>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $statusClass; ?>"><?php echo ucfirst($statusText); ?></span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15 Jun 2023</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-orange-600 hover:text-orange-800 mr-3">View</a>
-                                            <a href="#" class="text-orange-600 hover:text-orange-800">Download</a>
-                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo $formattedDate; ?></td>
                                     </tr>
+                                    <?php endforeach; ?>
+                                    <?php if (empty($forms)): ?>
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PRF-2023-002</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">HR Manager</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Human Resources</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">20 Jun 2023</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-orange-600 hover:text-orange-800 mr-3">View</a>
-                                            <a href="#" class="text-orange-600 hover:text-orange-800">Edit</a>
-                                        </td>
+                                        <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No PRF forms found</td>
                                     </tr>
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PRF-2023-003</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Marketing Specialist</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Marketing</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25 Jun 2023</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-orange-600 hover:text-orange-800 mr-3">View</a>
-                                            <a href="#" class="text-orange-600 hover:text-orange-800">Resubmit</a>
-                                        </td>
-                                    </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
