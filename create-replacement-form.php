@@ -13,9 +13,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $num_needed = intval($_POST['num_needed']);
     
     // Checkbox values (1 for checked, 0 for unchecked)
-    $replacement = isset($_POST['replacement']) ? 1 : 0;
-    $manning = isset($_POST['manning']) ? 1 : 0;
-    $others_reason = isset($_POST['others_reason']) ? 1 : 0;
+    $replacement = isset($_POST['reason_type']) && $_POST['reason_type'] === 'replacement' ? 1 : 0;
+    $manning = isset($_POST['reason_type']) && $_POST['reason_type'] === 'manning' ? 1 : 0;
+    $others_reason = isset($_POST['reason_type']) && $_POST['reason_type'] === 'others_reason' ? 1 : 0;
     $laptop = isset($_POST['laptop']) ? 1 : 0;
     $mobile = isset($_POST['mobile']) ? 1 : 0;
     $phone = isset($_POST['phone']) ? 1 : 0;
@@ -35,19 +35,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $chair_qty = isset($_POST['chair_qty']) ? intval($_POST['chair_qty']) : 0;
     
     // Process array fields
-    $rep_of_names = isset($_POST['rep_of_name']) ? json_encode($_POST['rep_of_name']) : json_encode([]);
-    $app_names = isset($_POST['app_name']) ? json_encode($_POST['app_name']) : json_encode([]);
-    $manning_specs = isset($_POST['manning_spec']) ? json_encode($_POST['manning_spec']) : json_encode([]);
-    $others_reason_specs = isset($_POST['others_reason_spec']) ? json_encode($_POST['others_reason_spec']) : json_encode([]);
-    $others_requirement_specs = isset($_POST['others_requirement_spec']) ? json_encode($_POST['others_requirement_spec']) : json_encode([]);
+    $rep_of_names = isset($_POST['rep_of_name']) ? json_encode(array_filter($_POST['rep_of_name'], 'strlen')) : json_encode([]);
+    $app_names = isset($_POST['app_name']) ? json_encode(array_filter($_POST['app_name'], 'strlen')) : json_encode([]);
+    $manning_specs = isset($_POST['manning_spec']) ? json_encode(array_filter($_POST['manning_spec'], 'strlen')) : json_encode([]);
+    $others_reason_specs = isset($_POST['others_reason_spec']) ? json_encode(array_filter($_POST['others_reason_spec'], 'strlen')) : json_encode([]);
+    $others_requirement_specs = isset($_POST['others_requirement_spec']) ? json_encode(array_filter($_POST['others_requirement_spec'], 'strlen')) : json_encode([]);
     
-    // Determine status based on number needed vs replacements provided
-    $rep_count = count(json_decode($rep_of_names, true));
-    if ($num_needed <= $rep_count) {
-        $status = 'completed';
-    } else {
-        $remaining = $num_needed - $rep_count;
-        $status = "pending (lacking $remaining needed)";
+    // Determine status based on number needed vs provided inputs
+    $status = 'pending';
+    if ($replacement) {
+        $rep_count = count(json_decode($rep_of_names, true));
+        $app_count = count(json_decode($app_names, true));
+        if ($num_needed <= $rep_count && $num_needed <= $app_count) {
+            $status = 'completed';
+        } else {
+            $remaining = max($num_needed - $rep_count, $num_needed - $app_count);
+            $status = "pending (lacking $remaining needed)";
+        }
+    } elseif ($manning) {
+        $manning_count = count(json_decode($manning_specs, true));
+        if ($num_needed <= $manning_count) {
+            $status = 'completed';
+        } else {
+            $remaining = $num_needed - $manning_count;
+            $status = "pending (lacking $remaining needed)";
+        }
+    } elseif ($others_reason) {
+        $others_count = count(json_decode($others_reason_specs, true));
+        if ($num_needed <= $others_count) {
+            $status = 'completed';
+        } else {
+            $remaining = $num_needed - $others_count;
+            $status = "pending (lacking $remaining needed)";
+        }
     }
     
     // Prepare and bind
@@ -227,7 +247,7 @@ $conn->close();
         <div class="sidebar bg-orange-600 text-white flex-shrink-0">
             <div class="p-3 flex items-center justify-between border-b border-orange-500">
                 <div class="flex items-center space-x-2">
-                    <img src="images/be-logo.png" alt="Logo" class="w-8 h-8 rounded-xl object-cover ">
+                    <img src="images/be-logo.png" alt="Logo" class="w-8 h-8 rounded-xl object-cover">
                     <span class="text-lg font-bold">PRF System</span>
                 </div>
                 <button id="sidebarToggle" class="md:hidden">
@@ -687,6 +707,7 @@ $conn->close();
 
             let reasonCount = 0;
             let comparisonText = '';
+            let percentage = 0;
             
             if (selectedReason === 'replacement') {
                 // Count replacement names
@@ -708,6 +729,7 @@ $conn->close();
                 
                 // Show detailed comparison
                 comparisonText = `Names: ${repNames}, Applicants: ${appNames}, Needed: ${numNeeded}`;
+                percentage = Math.min(100, Math.round((Math.min(repNames, appNames) / numNeeded) * 100));
                 document.getElementById('status-preview').innerHTML = statusText;
             } 
             else if (selectedReason === 'manning') {
@@ -723,7 +745,8 @@ $conn->close();
                     statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
                 }
                 
-                comparisonText = `Specs: ${reasonCount}, Needed: ${numNeeded}`;
+                comparisonText = `Manning Specs: ${reasonCount}, Needed: ${numNeeded}`;
+                percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
                 document.getElementById('status-preview').innerHTML = statusText;
             } 
             else if (selectedReason === 'others_reason') {
@@ -740,21 +763,10 @@ $conn->close();
                 }
                 
                 comparisonText = `Reasons: ${reasonCount}, Needed: ${numNeeded}`;
+                percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
                 document.getElementById('status-preview').innerHTML = statusText;
             }
 
-            // Calculate percentage based on the most limiting factor
-            let percentage;
-            if (selectedReason === 'replacement') {
-                const repNames = Array.from(document.querySelectorAll('input[name="rep_of_name[]"]'))
-                    .filter(input => input.value.trim() !== '').length;
-                const appNames = Array.from(document.querySelectorAll('input[name="app_name[]"]'))
-                    .filter(input => input.value.trim() !== '').length;
-                percentage = Math.min(100, Math.round((Math.min(repNames, appNames) / numNeeded) * 100));
-            } else {
-                percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
-            }
-            
             // Create comparison display
             const displayHTML = `
                 <div class="comparison-container">

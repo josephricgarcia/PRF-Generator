@@ -239,7 +239,7 @@ $conn->close();
         <div class="sidebar bg-orange-600 text-white flex-shrink-0">
             <div class="p-3 flex items-center justify-between border-b border-orange-500">
                 <div class="flex items-center space-x-2">
-                    <img src="images/be-logo.png" alt="Logo" class="w-8 h-8 rounded-xl object-cover ">
+                    <img src="images/be-logo.png" alt="Logo" class="w-8 h-8 rounded-xl object-cover">
                     <span class="text-lg font-bold">PRF System</span>
                 </div>
                 <button id="sidebarToggle" class="md:hidden">
@@ -699,6 +699,7 @@ $conn->close();
 
             let reasonCount = 0;
             let comparisonText = '';
+            let percentage = 0;
             
             if (selectedReason === 'replacement') {
                 // Count replacement names
@@ -720,6 +721,7 @@ $conn->close();
                 
                 // Show detailed comparison
                 comparisonText = `Names: ${repNames}, Applicants: ${appNames}, Needed: ${numNeeded}`;
+                percentage = Math.min(100, Math.round((Math.min(repNames, appNames) / numNeeded) * 100));
                 document.getElementById('status-preview').innerHTML = statusText;
             } 
             else if (selectedReason === 'manning') {
@@ -735,7 +737,8 @@ $conn->close();
                     statusText = `Will be marked as: <span class="status-badge status-pending">Pending (lacking ${remaining} needed)</span>`;
                 }
                 
-                comparisonText = `Specs: ${reasonCount}, Needed: ${numNeeded}`;
+                comparisonText = `Manning Specs: ${reasonCount}, Needed: ${numNeeded}`;
+                percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
                 document.getElementById('status-preview').innerHTML = statusText;
             } 
             else if (selectedReason === 'others_reason') {
@@ -752,21 +755,10 @@ $conn->close();
                 }
                 
                 comparisonText = `Reasons: ${reasonCount}, Needed: ${numNeeded}`;
+                percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
                 document.getElementById('status-preview').innerHTML = statusText;
             }
 
-            // Calculate percentage based on the most limiting factor
-            let percentage;
-            if (selectedReason === 'replacement') {
-                const repNames = Array.from(document.querySelectorAll('input[name="rep_of_name[]"]'))
-                    .filter(input => input.value.trim() !== '').length;
-                const appNames = Array.from(document.querySelectorAll('input[name="app_name[]"]'))
-                    .filter(input => input.value.trim() !== '').length;
-                percentage = Math.min(100, Math.round((Math.min(repNames, appNames) / numNeeded) * 100));
-            } else {
-                percentage = Math.min(100, Math.round((reasonCount / numNeeded) * 100));
-            }
-            
             // Create comparison display
             const displayHTML = `
                 <div class="comparison-container">
