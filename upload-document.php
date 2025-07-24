@@ -260,14 +260,15 @@ $conn->close();
                         <a href="view-documents.php" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
                             <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
                         </a>
-                                                                <button type="submit" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
-                                            <i class="fas fa-save mr-1 text-xs"></i> Save
-                                        </button>
-                                        <button type="reset" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
-                                        </button>
+                        <button id="saveButton" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                            <i class="fas fa-save mr-1 text-xs"></i> Save
+                        </button>
+                        <button type="reset" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
+                        </button>
                     </div>
-                </header>
+                </div>
+            </header>
 
             <!-- Main Content -->
             <main class="flex-1 overflow-y-auto p-4 card">
@@ -280,7 +281,7 @@ $conn->close();
                         </div>
                         <div class="details-container">
                             <div class="bg-white rounded-lg shadow-sm p-6">
-                                <form action="" method="POST" enctype="multipart/form-data" class="space-y-6">
+                                <form id="uploadForm" action="" method="POST" enctype="multipart/form-data" class="space-y-6">
                                     <div class="form-group">
                                         <label for="prf" class="block compact-label">PRF No:</label>
                                         <input type="text" id="prf" name="prf" class="compact-input border rounded focus:outline-none focus:border-orange-600" required pattern="[a-zA-Z0-9\-_]{1,50}" title="Alphanumeric, dashes, or underscores (max 50 characters)">
@@ -290,7 +291,6 @@ $conn->close();
                                         <input type="file" id="document" name="document" accept="image/jpeg,image/png,image/jpg" class="compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                     </div>
                                     <div class="flex justify-end space-x-3">
-
                                     </div>
                                 </form>
                             </div>
@@ -357,6 +357,12 @@ $conn->close();
             previewImage.style.display = 'none';
             previewPDF.style.display = 'none';
             previewContainer.querySelector('.error').style.display = 'none';
+            document.getElementById('uploadForm').reset();
+        });
+
+        // Trigger form submission on Save button click
+        document.getElementById('saveButton').addEventListener('click', () => {
+            document.getElementById('uploadForm').submit();
         });
     </script>
 </body>

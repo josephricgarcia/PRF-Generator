@@ -178,6 +178,21 @@ $conn->close();
                                 </div>
                             </div>
                         </a>
+
+                        <a href="backup-restore.php">
+                            <div class="card-hover bg-white rounded-xl shadow-md p-6 transition duration-300 cursor-pointer hover:border-blue-500 border border-transparent">
+                                <div class="flex items-center space-x-4">
+                                    <div class="bg-green-100 p-3 rounded-full">
+                                        <i class="fas fa-database text-green-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-base">Backup/Restore</h3>
+                                        <p class="text-gray-500 text-sm">Backup or restore your PRF data</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
                     </div>
 
                     <!-- Recent PRFs Section -->
