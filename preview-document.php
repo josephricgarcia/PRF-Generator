@@ -2,18 +2,23 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-include 'db.php';
+
+// Database connection
+$mysqli = new mysqli("localhost", "root", "", "prf_db");
+if ($mysqli->connect_error) {
+    die("Connection failed: " . $mysqli->connect_error);
+}
 
 // Check if ID is provided
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header("Location: view-documents.php");
+    header("Location: documents-list.php");
     exit();
 }
 
 $id = (int)$_GET['id'];
 
 // Fetch document details
-$stmt = $conn->prepare("SELECT prf_no, file_name, file_type, file_content, upload_date FROM scanned_documents WHERE id = ?");
+$stmt = $mysqli->prepare("SELECT prf_no, file_name, file_type, file_content, upload_date FROM scanned_documents WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -30,7 +35,7 @@ if ($result->num_rows === 0) {
     }
 }
 $stmt->close();
-$conn->close();
+$mysqli->close();
 ?>
 
 <!DOCTYPE html>
@@ -103,14 +108,9 @@ $conn->close();
             color: #991b1b;
             font-size: 0.75rem;
             margin-top: 0.25rem;
-        }
-        .debug {
-            color: #d97706;
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-            background-color: #fefcbf;
             padding: 0.5rem;
             border-radius: 0.25rem;
+            background-color: #fef2f2;
         }
         .card {
             display: flex;
@@ -183,7 +183,7 @@ $conn->close();
                             </a>
                         </li>
                         <li>
-                            <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded bg-white text-orange-600">
+                            <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
                                 <i class="fas fa-file w-4"></i>
                                 <span class="text-sm">View Scanned Documents</span>
                             </a>
@@ -243,29 +243,17 @@ $conn->close();
                                     <label class="block compact-label">Upload Date:</label>
                                     <div class="text-sm text-gray-700"><?php echo date('d M Y', strtotime($doc['upload_date'])); ?></div>
                                 </div>
-                                <div class="form-group">
-                                    <label class="block compact-label">File Size:</label>
-                                    <div class="text-sm text-gray-700">
-                                        <?php
-                                        $sizeInBytes = strlen($doc['file_content']);
-                                        if ($sizeInBytes >= 1024 * 1024) {
-                                            echo round($sizeInBytes / (1024 * 1024), 2) . ' MB';
-                                        } else {
-                                            echo round($sizeInBytes / 1024, 2) . ' KB';
-                                        }
-                                        ?>
-                                    </div>
-                                </div>
+                                </div   >
 
                                 <div class="section-title">Document Preview</div>
                                 <div class="preview-container">
                                     <?php
-                                    $base64Content = base64_encode($doc['file_content']);
+                                    $viewUrl = "view-document.php?id=" . urlencode($id);
                                     if ($doc['file_type'] === 'application/pdf') {
-                                        echo '<iframe src="data:application/pdf;base64,' . $base64Content . '" class="preview-pdf" title="Document Preview"></iframe>';
+                                        echo '<iframe src="' . $viewUrl . '" class="preview-pdf" title="Document Preview"></iframe>';
                                         echo '<div class="error" style="display: none;">Error loading PDF. The file might be corrupted or invalid.</div>';
                                     } else {
-                                        echo '<img src="data:' . htmlspecialchars($doc['file_type']) . ';base64,' . $base64Content . '" class="preview-image" alt="Document Preview" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';">';
+                                        echo '<img src="' . $viewUrl . '" class="preview-image" alt="Document Preview" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';">';
                                         echo '<div class="error" style="display: none;">Error loading image. The file might be corrupted or invalid.</div>';
                                     }
                                     ?>

@@ -18,49 +18,75 @@ $conn->query($createTableQuery);
 // Process form submission for upload or update
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $prf = htmlspecialchars(trim($_POST['prf']));
+    $updateId = isset($_POST['update_id']) ? (int)$_POST['update_id'] : 0;
     $error = '';
     $success = '';
 
-    // Validate PRF number (alphanumeric with optional dashes/underscores, max 50 chars)
+    // Validate PRF number
     if (empty($prf) || !preg_match('/^[a-zA-Z0-9\-_]{1,50}$/', $prf)) {
         $error = "Invalid PRF number. Use alphanumeric characters, dashes, or underscores (max 50 characters).";
-    } elseif (isset($_FILES['document']) && $_FILES['document']['error'] == 0) {
-        $file = $_FILES['document'];
-        $fileName = basename($file['name']);
-        $fileType = mime_content_type($file['tmp_name']);
-        $fileSize = $file['size'];
-        $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-        $maxFileSize = 4 * 1024 * 1024; // 4MB
+    } else {
+        if ($updateId > 0) {
+            // Update existing record
+            if (isset($_FILES['document']) && $_FILES['document']['error'] == 0) {
+                // New file uploaded, update all fields
+                $file = $_FILES['document'];
+                $fileName = basename($file['name']);
+                $fileType = mime_content_type($file['tmp_name']);
+                $fileSize = $file['size'];
+                $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                $maxFileSize = 4 * 1024 * 1024; // 4MB
 
-        if ($fileSize > $maxFileSize) {
-            $error = "File size exceeds the maximum limit of 4MB.";
-        } elseif (in_array($fileType, $allowedTypes)) {
-            $fileContent = file_get_contents($file['tmp_name']);
-
-            // Check if updating an existing record
-            $updateId = isset($_POST['update_id']) ? (int)$_POST['update_id'] : 0;
-
-            if ($updateId > 0) {
-                // Update existing record
-                $stmt = $conn->prepare("UPDATE scanned_documents SET prf_no = ?, file_name = ?, file_type = ?, file_content = ?, upload_date = NOW() WHERE id = ?");
-                $stmt->bind_param("ssssi", $prf, $fileName, $fileType, $fileContent, $updateId);
+                if ($fileSize > $maxFileSize) {
+                    $error = "File size exceeds the maximum limit of 4MB.";
+                } elseif (in_array($fileType, $allowedTypes)) {
+                    $fileContent = file_get_contents($file['tmp_name']);
+                    $stmt = $conn->prepare("UPDATE scanned_documents SET prf_no = ?, file_name = ?, file_type = ?, file_content = ?, upload_date = NOW() WHERE id = ?");
+                    $null = NULL;
+                    $stmt->bind_param("sssbi", $prf, $fileName, $fileType, $null, $updateId);
+                    $stmt->send_long_data(3, $fileContent);
+                } else {
+                    $error = "Invalid file type. Only JPEG, PNG, and PDF are allowed.";
+                }
             } else {
-                // Insert new record
-                $stmt = $conn->prepare("INSERT INTO scanned_documents (prf_no, file_name, file_type, file_content, upload_date) VALUES (?, ?, ?, ?, NOW())");
-                $stmt->bind_param("ssss", $prf, $fileName, $fileType, $fileContent);
+                // No new file, update only prf_no
+                $stmt = $conn->prepare("UPDATE scanned_documents SET prf_no = ? WHERE id = ?");
+                $stmt->bind_param("si", $prf, $updateId);
             }
+        } else {
+            // Insert new record, requires file
+            if (isset($_FILES['document']) && $_FILES['document']['error'] == 0) {
+                $file = $_FILES['document'];
+                $fileName = basename($file['name']);
+                $fileType = mime_content_type($file['tmp_name']);
+                $fileSize = $file['size'];
+                $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                $maxFileSize = 4 * 1024 * 1024; // 4MB
 
+                if ($fileSize > $maxFileSize) {
+                    $error = "File size exceeds the maximum limit of 4MB.";
+                } elseif (in_array($fileType, $allowedTypes)) {
+                    $fileContent = file_get_contents($file['tmp_name']);
+                    $stmt = $conn->prepare("INSERT INTO scanned_documents (prf_no, file_name, file_type, file_content, upload_date) VALUES (?, ?, ?, ?, NOW())");
+                    $null = NULL;
+                    $stmt->bind_param("sssb", $prf, $fileName, $fileType, $null);
+                    $stmt->send_long_data(3, $fileContent);
+                } else {
+                    $error = "Invalid file type. Only JPEG, PNG, and PDF are allowed.";
+                }
+            } else {
+                $error = "No file uploaded or an error occurred during upload.";
+            }
+        }
+
+        if (isset($stmt)) {
             if ($stmt->execute()) {
                 $success = $updateId > 0 ? "Document updated successfully!" : "Document uploaded successfully!";
             } else {
                 $error = "Error saving to database: " . $stmt->error;
             }
             $stmt->close();
-        } else {
-            $error = "Invalid file type. Only JPEG, PNG, and PDF are allowed.";
         }
-    } else {
-        $error = "No file uploaded or an error occurred during upload.";
     }
 }
 
