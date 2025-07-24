@@ -205,18 +205,6 @@ $conn->close();
                                 <span class="text-sm">View Scanned Documents</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="create-replacement-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
-                                <i class="fas fa-file-alt w-4"></i>
-                                <span class="text-sm">Create Replacement Form</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="create-oncall-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
-                                <i class="fas fa-file-alt w-4"></i>
-                                <span class="text-sm">Create On Call Form</span>
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </nav>
@@ -272,7 +260,7 @@ $conn->close();
                                             <i class="fas fa-eye"></i>
                                             <span>View</span>
                                         </a>
-                                        <a href="upload-document.php?update_id=<?php echo urlencode($doc['id']); ?>" class="text-orange-600 hover:text-orange-800">
+                                        <a href="update-document.php?update_id=<?php echo urlencode($doc['id']); ?>" class="text-orange-600 hover:text-orange-800">
                                             <i class="fas fa-edit"></i>
                                             <span>Update</span>
                                         </a>

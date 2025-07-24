@@ -71,66 +71,66 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // Determine status
     $status = 'pending'; // Default status
-if ($replacement) {
-    $rep_count = count(json_decode($rep_of_names, true));
-    $app_count = count(json_decode($app_names, true));
-    if ($num_needed <= $rep_count && $num_needed <= $app_count) {
-        $status = 'completed';
-    } else {
-        $remaining = max($num_needed - $rep_count, $num_needed - $app_count);
-        $status = "pending (lacking $remaining needed)";
+    if ($replacement) {
+        $rep_count = count(json_decode($rep_of_names, true));
+        $app_count = count(json_decode($app_names, true));
+        if ($num_needed <= $rep_count && $num_needed <= $app_count) {
+            $status = 'completed';
+        } else {
+            $remaining = max($num_needed - $rep_count, $num_needed - $app_count);
+            $status = "pending (lacking $remaining needed)";
+        }
+    } elseif ($manning) {
+        $manning_count = count(json_decode($manning_specs, true));
+        if ($num_needed <= $manning_count) {
+            $status = 'completed';
+        } else {
+            $remaining = $num_needed - $manning_count;
+            $status = "pending (lacking $remaining needed)";
+        }
+    } elseif ($others_reason) {
+        $others_count = count(json_decode($others_reason_specs, true));
+        if ($num_needed <= $others_count) {
+            $status = 'completed';
+        } else {
+            $remaining = $num_needed - $others_count;
+            $status = "pending (lacking $remaining needed)";
+        }
     }
-} elseif ($manning) {
-    $manning_count = count(json_decode($manning_specs, true));
-    if ($num_needed <= $manning_count) {
-        $status = 'completed';
-    } else {
-        $remaining = $num_needed - $manning_count;
-        $status = "pending (lacking $remaining needed)";
-    }
-} elseif ($others_reason) {
-    $others_count = count(json_decode($others_reason_specs, true));
-    if ($num_needed <= $others_count) {
-        $status = 'completed';
-    } else {
-        $remaining = $num_needed - $others_count;
-        $status = "pending (lacking $remaining needed)";
-    }
-}
     
     // Update database
     $table = $form_type === 'oncall' ? 'oncall_forms' : 'replacement_forms';
-$stmt = $conn->prepare("UPDATE $table SET 
-    position_title = ?, reports_to = ?, job_level = ?, 
-    reason_replacement = ?, rep_of_name = ?, applicant_names = ?,
-    reason_manning = ?, manning_spec = ?, reason_others = ?, others_reason_spec = ?,
-    date_requested = ?, date_needed = ?, number_needed = ?,
-    requirement_laptop = ?, laptop_qty = ?, requirement_mobile = ?, mobile_qty = ?,
-    requirement_phone = ?, phone_qty = ?, requirement_office = ?, office_qty = ?,
-    requirement_uniform = ?, uniform_qty = ?, requirement_table = ?, table_qty = ?,
-    requirement_chair = ?, chair_qty = ?, requirement_others = ?, others_requirement_spec = ?,
-    status = ?
-    WHERE prf_no = ?");
+    $stmt = $conn->prepare("UPDATE $table SET 
+        position_title = ?, reports_to = ?, job_level = ?, 
+        reason_replacement = ?, rep_of_name = ?, applicant_names = ?,
+        reason_manning = ?, manning_spec = ?, reason_others = ?, others_reason_spec = ?,
+        date_requested = ?, date_needed = ?, number_needed = ?,
+        requirement_laptop = ?, laptop_qty = ?, requirement_mobile = ?, mobile_qty = ?,
+        requirement_phone = ?, phone_qty = ?, requirement_office = ?, office_qty = ?,
+        requirement_uniform = ?, uniform_qty = ?, requirement_table = ?, table_qty = ?,
+        requirement_chair = ?, chair_qty = ?, requirement_others = ?, others_requirement_spec = ?,
+        status = ?
+        WHERE prf_no = ?");
     
     $types = "sssissisisssi" . str_repeat('i', 15) . "sss"; // 13 's' + 15 'i' + 3 's'
-$stmt->bind_param($types, 
-    $pos, $rep, $job,
-    $replacement, $rep_of_names, $app_names,
-    $manning, $manning_specs, $others_reason, $others_reason_specs,
-    $date_req, $date_needed, $num_needed,
-    $laptop, $laptop_qty, $mobile, $mobile_qty,
-    $phone, $phone_qty, $office, $office_qty,
-    $uniform, $uniform_qty, $table, $table_qty,
-    $chair, $chair_qty, $others_requirement, $others_requirement_specs,
-    $status, $prf
-);
+    $stmt->bind_param($types, 
+        $pos, $rep, $job,
+        $replacement, $rep_of_names, $app_names,
+        $manning, $manning_specs, $others_reason, $others_reason_specs,
+        $date_req, $date_needed, $num_needed,
+        $laptop, $laptop_qty, $mobile, $mobile_qty,
+        $phone, $phone_qty, $office, $office_qty,
+        $uniform, $uniform_qty, $table, $table_qty,
+        $chair, $chair_qty, $others_requirement, $others_requirement_specs,
+        $status, $prf
+    );
 
-// Execute the statement
-if ($stmt->execute()) {
-    $success = "Form updated successfully! Status: " . ucfirst($status);
-} else {
-    $error = "Error: " . $stmt->error;
-}
+    // Execute the statement
+    if ($stmt->execute()) {
+        $success = "Form updated successfully! Status: " . ucfirst($status);
+    } else {
+        $error = "Error: " . $stmt->error;
+    }
     
     $stmt->close();
 }
@@ -295,21 +295,15 @@ $conn->close();
                             </a>
                         </li>
                         <li>
-                            <a href="view-form.php" class="flex items-center space-x-2 p-2 rounded bg-white text-orange-600">
+                            <a href="view-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
                                 <i class="fas fa-folder w-4"></i>
                                 <span class="text-sm">View PRF File</span>
                             </a>
                         </li>
                         <li>
-                            <a href="create-replacement-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
-                                <i class="fas fa-file-alt w-4"></i>
-                                <span class="text-sm">Create Replacement Form</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="create-oncall-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
-                                <i class="fas fa-file-alt w-4"></i>
-                                <span class="text-sm">Create On Call Form</span>
+                            <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
+                                <i class="fas fa-file w-4"></i>
+                                <span class="text-sm">View Scanned Documents</span>
                             </a>
                         </li>
                     </ul>
@@ -325,6 +319,17 @@ $conn->close();
                             <i class="fas fa-bars text-gray-600"></i>
                         </button>
                         <h1 class="text-lg font-semibold text-gray-800">Update <?php echo ucfirst($form_type); ?> Form</h1>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="submit" form="updateForm" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                            <i class="fas fa-save mr-1 text-xs"></i> Update
+                        </button>
+                        <button type="reset" form="updateForm" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
+                        </button>
+                        <a href="view-form.php" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                            <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
+                        </a>
                     </div>
                 </div>
             </header>
@@ -342,7 +347,7 @@ $conn->close();
 
                     <?php if ($form_data): ?>
                     <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-                        <form action="" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4 compact-section">
+                        <form action="" method="POST" id="updateForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 compact-section">
                             <!-- Left Column -->
                             <div class="space-y-3">
                                 <div class="form-group">
@@ -432,13 +437,13 @@ $conn->close();
                                         if ($manning_specs && is_array($manning_specs)) {
                                             foreach ($manning_specs as $spec) {
                                                 echo '<div class="input-with-delete">';
-                                                echo '<input type="text" name="manning_spec[]" value="' . htmlspecialchars($spec) . '" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify manning" ' . ($form_data['reason_manning'] ? '' : 'disabled') . ' required>';
+                                                echo '<input type="text" name="manning_spec[]" value="' . htmlspecialchars($spec) . '" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify manning" ' . ($form_data['reason_manning'] ? '' : 'disabled') . '>';
                                                 echo '<button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" ' . ($form_data['reason_manning'] ? '' : 'disabled') . '><i class="fas fa-trash-alt"></i></button>';
                                                 echo '</div>';
                                             }
                                         } else {
                                             echo '<div class="input-with-delete">';
-                                            echo '<input type="text" name="manning_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify manning" ' . ($form_data['reason_manning'] ? '' : 'disabled') . ' required>';
+                                            echo '<input type="text" name="manning_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify manning" ' . ($form_data['reason_manning'] ? '' : 'disabled') . '>';
                                             echo '<button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" ' . ($form_data['reason_manning'] ? '' : 'disabled') . '><i class="fas fa-trash-alt"></i></button>';
                                             echo '</div>';
                                         }
@@ -460,13 +465,13 @@ $conn->close();
                                         if ($others_reason_specs && is_array($others_reason_specs)) {
                                             foreach ($others_reason_specs as $spec) {
                                                 echo '<div class="input-with-delete">';
-                                                echo '<input type="text" name="others_reason_spec[]" value="' . htmlspecialchars($spec) . '" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify reason" ' . ($form_data['reason_others'] ? '' : 'disabled') . ' required>';
+                                                echo '<input type="text" name="others_reason_spec[]" value="' . htmlspecialchars($spec) . '" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify reason" ' . ($form_data['reason_others'] ? '' : 'disabled') . '>';
                                                 echo '<button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" ' . ($form_data['reason_others'] ? '' : 'disabled') . '><i class="fas fa-trash-alt"></i></button>';
                                                 echo '</div>';
                                             }
                                         } else {
                                             echo '<div class="input-with-delete">';
-                                            echo '<input type="text" name="others_reason_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify reason" ' . ($form_data['reason_others'] ? '' : 'disabled') . ' required>';
+                                            echo '<input type="text" name="others_reason_spec[]" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" placeholder="Specify reason" ' . ($form_data['reason_others'] ? '' : 'disabled') . '>';
                                             echo '<button type="button" class="delete-field-btn bg-red-500 text-white px-1.5 py-0.5 rounded text-xs hover:bg-red-600" ' . ($form_data['reason_others'] ? '' : 'disabled') . '><i class="fas fa-trash-alt"></i></button>';
                                             echo '</div>';
                                         }
@@ -502,43 +507,43 @@ $conn->close();
                                         <input type="checkbox" name="laptop" id="laptop" class="mr-2" <?php echo $form_data['requirement_laptop'] ? 'checked' : ''; ?>>
                                         <label for="laptop">Laptop/Desktop:</label>
                                     </div>
-                                    <input type="number" name="laptop_qty" value="<?php echo htmlspecialchars($form_data['laptop_qty']); ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_laptop'] ? '' : 'disabled'; ?>>
+                                    <input type="number" name="laptop_qty" value="<?php echo $form_data['laptop_qty'] != 0 ? htmlspecialchars($form_data['laptop_qty']) : ''; ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_laptop'] ? '' : 'disabled'; ?>>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="mobile" id="mobile" class="mr-2" <?php echo $form_data['requirement_mobile'] ? 'checked' : ''; ?>>
                                         <label for="mobile">Mobile Unit:</label>
                                     </div>
-                                    <input type="number" name="mobile_qty" value="<?php echo htmlspecialchars($form_data['mobile_qty']); ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_mobile'] ? '' : 'disabled'; ?>>
+                                    <input type="number" name="mobile_qty" value="<?php echo $form_data['mobile_qty'] != 0 ? htmlspecialchars($form_data['mobile_qty']) : ''; ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_mobile'] ? '' : 'disabled'; ?>>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="phone" id="phone" class="mr-2" <?php echo $form_data['requirement_phone'] ? 'checked' : ''; ?>>
                                         <label for="phone">Phone Plan:</label>
                                     </div>
-                                    <input type="number" name="phone_qty" value="<?php echo htmlspecialchars($form_data['phone_qty']); ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_phone'] ? '' : 'disabled'; ?>>
+                                    <input type="number" name="phone_qty" value="<?php echo $form_data['phone_qty'] != 0 ? htmlspecialchars($form_data['phone_qty']) : ''; ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_phone'] ? '' : 'disabled'; ?>>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="office" id="office" class="mr-2" <?php echo $form_data['requirement_office'] ? 'checked' : ''; ?>>
                                         <label for="office">Office/Desk Space:</label>
                                     </div>
-                                    <input type="number" name="office_qty" value="<?php echo htmlspecialchars($form_data['office_qty']); ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_office'] ? '' : 'disabled'; ?>>
+                                    <input type="number" name="office_qty" value="<?php echo $form_data['office_qty'] != 0 ? htmlspecialchars($form_data['office_qty']) : ''; ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_office'] ? '' : 'disabled'; ?>>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="uniform" id="uniform" class="mr-2" <?php echo $form_data['requirement_uniform'] ? 'checked' : ''; ?>>
                                         <label for="uniform">Uniform:</label>
                                     </div>
-                                    <input type="number" name="uniform_qty" value="<?php echo htmlspecialchars($form_data['uniform_qty']); ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_uniform'] ? '' : 'disabled'; ?>>
+                                    <input type="number" name="uniform_qty" value="<?php echo $form_data['uniform_qty'] != 0 ? htmlspecialchars($form_data['uniform_qty']) : ''; ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_uniform'] ? '' : 'disabled'; ?>>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="table" id="table" class="mr-2" <?php echo $form_data['requirement_table'] ? 'checked' : ''; ?>>
                                         <label for="table">Table:</label>
                                     </div>
-                                    <input type="number" name="table_qty" value="<?php echo htmlspecialchars($form_data['table_qty']); ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_table'] ? '' : 'disabled'; ?>>
+                                    <input type="number" name="table_qty" value="<?php echo $form_data['table_qty'] != 0 ? htmlspecialchars($form_data['table_qty']) : ''; ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_table'] ? '' : 'disabled'; ?>>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="chair" id="chair" class="mr-2" <?php echo $form_data['requirement_chair'] ? 'checked' : ''; ?>>
                                         <label for="chair">Chair:</label>
                                     </div>
-                                    <input type="number" name="chair_qty" value="<?php echo htmlspecialchars($form_data['chair_qty']); ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_chair'] ? '' : 'disabled'; ?>>
+                                    <input type="number" name="chair_qty" value="<?php echo $form_data['chair_qty'] != 0 ? htmlspecialchars($form_data['chair_qty']) : ''; ?>" class="w-full compact-input border rounded focus:outline-none focus:border-orange-600" required <?php echo $form_data['requirement_chair'] ? '' : 'disabled'; ?>>
                                     
                                     <div class="flex items-center">
                                         <input type="checkbox" name="others_requirement" id="others_requirement" class="mr-2" <?php echo $form_data['requirement_others'] ? 'checked' : ''; ?>>
@@ -566,19 +571,6 @@ $conn->close();
                                         <button type="button" id="addOthersRequirementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600" <?php echo $form_data['requirement_others'] ? '' : 'disabled'; ?>>Add requirement</button>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Form buttons -->
-                            <div class="col-span-1 md:col-span-2 mt-4 flex space-x-3">
-                                <button type="submit" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
-                                    <i class="fas fa-save mr-1 text-xs"></i> Update
-                                </button>
-                                <button type="reset" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                                    <i class="fas fa-undo mr-1 text-xs"></i> Reset
-                                </button>
-                                <a href="view-form.php" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                                    <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
-                                </a>
                             </div>
                         </form>
                     </div>
@@ -896,6 +888,11 @@ $conn->close();
         
         containers.forEach(containerId => {
             document.getElementById(containerId).addEventListener('input', updateReasonComparison);
+        });
+
+        // Remove required attribute from Manning and Others fields
+        document.querySelectorAll('#manning-fields input, #others-reason-fields input').forEach(input => {
+            input.removeAttribute('required');
         });
 
         document.addEventListener('DOMContentLoaded', () => {

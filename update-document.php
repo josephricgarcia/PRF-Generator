@@ -4,29 +4,22 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 include 'db.php';
 
-// Create scanned_documents table if it doesn't exist
-$createTableQuery = "CREATE TABLE IF NOT EXISTS scanned_documents (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    prf_no VARCHAR(50) NOT NULL,
-    file_name VARCHAR(255) NOT NULL,
-    file_type VARCHAR(50) NOT NULL,
-    file_content LONGBLOB NOT NULL,
-    upload_date DATETIME NOT NULL
-)";
-$conn->query($createTableQuery);
-
-// Process form submission for new document upload
+// Process form submission for updating document
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $prf = htmlspecialchars(trim($_POST['prf']));
+    $updateId = isset($_POST['update_id']) ? (int)$_POST['update_id'] : 0;
     $error = '';
     $success = '';
 
     // Validate PRF number
     if (empty($prf) || !preg_match('/^[a-zA-Z0-9\-_]{1,50}$/', $prf)) {
         $error = "Invalid PRF number. Use alphanumeric characters, dashes, or underscores (max 50 characters).";
+    } elseif ($updateId <= 0) {
+        $error = "Invalid document ID.";
     } else {
-        // Insert new record, requires file
+        // Update existing record
         if (isset($_FILES['document']) && $_FILES['document']['error'] == 0) {
+            // New file uploaded, update all fields
             $file = $_FILES['document'];
             $fileName = basename($file['name']);
             $fileType = mime_content_type($file['tmp_name']);
@@ -38,24 +31,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $error = "File size exceeds the maximum limit of 4MB.";
             } elseif (in_array($fileType, $allowedTypes)) {
                 $fileContent = file_get_contents($file['tmp_name']);
-                $stmt = $conn->prepare("INSERT INTO scanned_documents (prf_no, file_name, file_type, file_content, upload_date) VALUES (?, ?, ?, ?, NOW())");
+                $stmt = $conn->prepare("UPDATE scanned_documents SET prf_no = ?, file_name = ?, file_type = ?, file_content = ?, upload_date = NOW() WHERE id = ?");
                 $null = NULL;
-                $stmt->bind_param("sssb", $prf, $fileName, $fileType, $null);
+                $stmt->bind_param("sssbi", $prf, $fileName, $fileType, $null, $updateId);
                 $stmt->send_long_data(3, $fileContent);
-
-                if ($stmt->execute()) {
-                    $success = "Document uploaded successfully!";
-                } else {
-                    $error = "Error saving to database: " . $stmt->error;
-                }
-                $stmt->close();
             } else {
                 $error = "Invalid file type. Only JPEG, PNG, and PDF are allowed.";
             }
         } else {
-            $error = "No file uploaded or an error occurred during upload.";
+            // No new file, update only prf_no
+            $stmt = $conn->prepare("UPDATE scanned_documents SET prf_no = ? WHERE id = ?");
+            $stmt->bind_param("si", $prf, $updateId);
+        }
+
+        if (isset($stmt)) {
+            if ($stmt->execute()) {
+                $success = "Document updated successfully!";
+            } else {
+                $error = "Error updating database: " . $stmt->error;
+            }
+            $stmt->close();
         }
     }
+}
+
+// Fetch document for editing if update_id is provided
+$updateId = isset($_GET['update_id']) ? (int)$_GET['update_id'] : 0;
+$updateData = null;
+if ($updateId > 0) {
+    $stmt = $conn->prepare("SELECT prf_no, file_name, file_type FROM scanned_documents WHERE id = ?");
+    $stmt->bind_param("i", $updateId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $updateData = $result->fetch_assoc();
+    $stmt->close();
+} else {
+    $error = "No document ID provided.";
 }
 
 $conn->close();
@@ -66,7 +77,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload New Document</title>
+    <title>Update Document</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -210,7 +221,7 @@ $conn->close();
                             </a>
                         </li>
                         <li>
-                            <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded bg-white text-orange-600">
+                            <a href="view-documents.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
                                 <i class="fas fa-file w-4"></i>
                                 <span class="text-sm">View Scanned Documents</span>
                             </a>
@@ -229,12 +240,20 @@ $conn->close();
                         <button id="mobileSidebarToggle" class="md:hidden mr-3">
                             <i class="fas fa-bars text-gray-600"></i>
                         </button>
-                        <h1 class="text-lg font-semibold text-gray-800">Upload New Document</h1>
+                        <h1 class="text-lg font-semibold text-gray-800">Update Document</h1>
                     </div>
                     <div class="flex space-x-3">
                         <a href="view-documents.php" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
                             <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
                         </a>
+                        <?php if ($updateData): ?>
+                        <button type="submit" form="updateForm" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                            <i class="fas fa-save mr-1 text-xs"></i> Update
+                        </button>
+                        <button type="reset" form="updateForm" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
+                        </button>
+                        <?php endif; ?>
                     </div>
                 </header>
 
@@ -246,35 +265,40 @@ $conn->close();
                     <?php elseif (isset($error)): ?>
                         <div class="error"><?php echo htmlspecialchars($error); ?></div>
                     <?php endif; ?>
-                    <div class="flex">
-                        <div class="preview-container" id="previewContainer">
-                            <img id="previewImage" class="preview-image" alt="Document Preview" style="display: none;">
-                            <iframe id="previewPDF" class="preview-pdf" style="display: none;" title="Document Preview"></iframe>
-                            <div class="error" style="display: none;">Error loading preview. The file might be corrupted or invalid.</div>
-                        </div>
-                        <div class="details-container">
-                            <div class="bg-white rounded-lg shadow-sm p-6">
-                                <form action="" method="POST" enctype="multipart/form-data" class="space-y-6">
-                                    <div class="form-group">
-                                        <label for="prf" class="block compact-label">PRF No:</label>
-                                        <input type="text" id="prf" name="prf" class="compact-input border rounded focus:outline-none focus:border-orange-600" required pattern="[a-zA-Z0-9\-_]{1,50}" title="Alphanumeric, dashes, or underscores (max 50 characters)">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="document" class="block compact-label">Select Document (JPEG, PNG, JPG, max 4MB):</label>
-                                        <input type="file" id="document" name="document" accept="image/jpeg,image/png,image/jpg" class="compact-input border rounded focus:outline-none focus:border-orange-600" required>
-                                    </div>
-                                    <div class="flex justify-end space-x-3">
-                                        <button type="submit" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
-                                            <i class="fas fa-save mr-1 text-xs"></i> Save
-                                        </button>
-                                        <button type="reset" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
-                                        </button>
-                                    </div>
-                                </form>
+                    <?php if ($updateData): ?>
+                        <div class="flex">
+                            <div class="preview-container" id="previewContainer">
+                                <img id="previewImage" class="preview-image" alt="Document Preview" style="display: none;">
+                                <iframe id="previewPDF" class="preview-pdf" style="display: none;" title="Document Preview"></iframe>
+                                <div class="error" style="display: none;">Error loading preview. The file might be corrupted or invalid.</div>
+                            </div>
+                            <div class="details-container">
+                                <div class="bg-white rounded-lg shadow-sm p-6">
+                                    <form id="updateForm" action="" method="POST" enctype="multipart/form-data" class="space-y-6">
+                                        <input type="hidden" name="update_id" value="<?php echo $updateId; ?>">
+                                        <div class="form-group">
+                                            <label for="prf" class="block compact-label">PRF No:</label>
+                                            <input type="text" id="prf" name="prf" class="compact-input border rounded focus:outline-none focus:border-orange-600" value="<?php echo htmlspecialchars($updateData['prf_no']); ?>" required pattern="[a-zA-Z0-9\-_]{1,50}" title="Alphanumeric, dashes, or underscores (max 50 characters)">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="document" class="block compact-label">Select New Document (JPEG, PNG, PDF, max 4MB):</label>
+                                            <input type="file" id="document" name="document" accept="image/jpeg,image/png,application/pdf" class="compact-input border rounded focus:outline-none focus:border-orange-600">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="block compact-label">Current File Name:</label>
+                                            <div class="text-sm text-gray-700"><?php echo htmlspecialchars($updateData['file_name']); ?></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="block compact-label">Current File Type:</label>
+                                            <div class="text-sm text-gray-700"><?php echo strtoupper(str_replace('image/', '', str_replace('application/', '', $updateData['file_type']))); ?></div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    <?php else: ?>
+                        <div class="error">Document not found.</div>
+                    <?php endif; ?>
                 </div>
             </main>
         </div>
@@ -331,12 +355,32 @@ $conn->close();
         });
 
         // Clear preview when resetting form
-        document.querySelector('button[type="reset"]').addEventListener('click', () => {
+        document.querySelector('button[form="updateForm"][type="reset"]').addEventListener('click', () => {
             previewContainer.style.display = 'none';
             previewImage.style.display = 'none';
             previewPDF.style.display = 'none';
             previewContainer.querySelector('.error').style.display = 'none';
         });
+
+        // Show existing document preview
+        <?php if ($updateData): ?>
+            window.addEventListener('load', () => {
+                const viewUrl = "view-document.php?id=<?php echo urlencode($updateId); ?>";
+                const fileType = "<?php echo $updateData['file_type']; ?>";
+                if (fileType === 'application/pdf') {
+                    previewPDF.src = viewUrl;
+                    previewPDF.style.display = 'block';
+                    previewImage.style.display = 'none';
+                    previewContainer.querySelector('.error').style.display = 'none';
+                } else {
+                    previewImage.src = viewUrl;
+                    previewImage.style.display = 'block';
+                    previewPDF.style.display = 'none';
+                    previewContainer.querySelector('.error').style.display = 'none';
+                }
+                previewContainer.style.display = 'flex';
+            });
+        <?php endif; ?>
     </script>
 </body>
 </html>

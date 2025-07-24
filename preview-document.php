@@ -83,8 +83,8 @@ $mysqli->close();
             border-bottom: 1px solid #eee;
         }
         .preview-container {
-            max-width: 100%;
-            max-height: 600px;
+            max-width: 50%;
+            max-height: 50%;
             overflow: auto;
             border: 1px solid #e5e7eb;
             border-radius: 0.5rem;
@@ -94,8 +94,7 @@ $mysqli->close();
             align-items: center;
         }
         .preview-image {
-            max-width: 100%;
-            max-height: 600px;
+            max-width: 70%;
             height: auto;
             object-fit: contain;
         }
@@ -114,14 +113,18 @@ $mysqli->close();
         }
         .card {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: flex-start;
             min-height: calc(100vh - 64px);
             padding-top: 1rem;
         }
         .form-container {
-            max-width: 48rem;
+            max-width: 100%;
             width: 100%;
+        }
+        .details-container {
+            flex: 1;
+            padding-left: 1rem;
         }
         @media (max-width: 768px) {
             .preview-container {
@@ -130,25 +133,52 @@ $mysqli->close();
             .preview-pdf {
                 height: 400px;
             }
+            .card {
+                flex-direction: column;
+            }
+            .details-container {
+                padding-left: 0;
+                margin-top: 1rem;
+            }
         }
         @media print {
             body * {
                 visibility: hidden;
+                margin: 0;
+                padding: 0;
             }
             .preview-container, .preview-container * {
                 visibility: visible;
+            }
+            .preview-container {
                 position: absolute;
                 top: 0;
                 left: 0;
-                width: 210mm;
-                height: auto;
-                max-height: 297mm;
-                object-fit: contain;
+                width: 100%;
+                height: 100%;
                 border: none;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .preview-image {
+                max-width: 90% !important;
+                max-height: 90% !important;
+                width: auto;
+                height: auto;
+                object-fit: contain;
+                page-break-inside: avoid;
             }
             .preview-pdf {
-                width: 210mm;
-                height: 297mm;
+                width: 100% !important;
+                height: 100% !important;
+                border: none;
+            }
+            @page {
+                margin: 0.5in;
+                size: auto;
             }
         }
     </style>
@@ -188,18 +218,6 @@ $mysqli->close();
                                 <span class="text-sm">View Scanned Documents</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="create-replacement-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
-                                <i class="fas fa-file-alt w-4"></i>
-                                <span class="text-sm">Create Replacement Form</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="create-oncall-form.php" class="flex items-center space-x-2 p-2 rounded hover:bg-white hover:text-orange-600">
-                                <i class="fas fa-file-alt w-4"></i>
-                                <span class="text-sm">Create On Call Form</span>
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </nav>
@@ -216,6 +234,17 @@ $mysqli->close();
                         </button>
                         <h1 class="text-lg font-semibold text-gray-800">Preview Document</h1>
                     </div>
+                    <div class="flex space-x-3">
+                        <a href="view-documents.php" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                            <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
+                        </a>
+                        <a href="update-document.php?update_id=<?php echo urlencode($id); ?>" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                            <i class="fas fa-edit mr-1 text-xs"></i> Update
+                        </a>
+                        <button onclick="window.print()" class="bg-blue-600 text-white py-2 px-4 rounded text-sm hover:bg-blue-700 flex items-center">
+                            <i class="fas fa-print mr-1 text-xs"></i> Print
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -225,50 +254,39 @@ $mysqli->close();
                     <?php if (isset($error)): ?>
                         <div class="error"><?php echo htmlspecialchars($error); ?></div>
                     <?php else: ?>
-                        <div class="bg-white rounded-lg shadow-sm p-6">
-                            <div class="space-y-6">
-                                <div class="form-group">
-                                    <label class="block compact-label">PRF No:</label>
-                                    <div class="text-sm text-gray-700"><?php echo htmlspecialchars($doc['prf_no']); ?></div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="block compact-label">File Name:</label>
-                                    <div class="text-sm text-gray-700"><?php echo htmlspecialchars($doc['file_name']); ?></div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="block compact-label">File Type:</label>
-                                    <div class="text-sm text-gray-700"><?php echo strtoupper(str_replace('image/', '', str_replace('application/', '', $doc['file_type']))); ?></div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="block compact-label">Upload Date:</label>
-                                    <div class="text-sm text-gray-700"><?php echo date('d M Y', strtotime($doc['upload_date'])); ?></div>
-                                </div>
-                                </div   >
-
-                                <div class="section-title">Document Preview</div>
-                                <div class="preview-container">
-                                    <?php
-                                    $viewUrl = "view-document.php?id=" . urlencode($id);
-                                    if ($doc['file_type'] === 'application/pdf') {
-                                        echo '<iframe src="' . $viewUrl . '" class="preview-pdf" title="Document Preview"></iframe>';
-                                        echo '<div class="error" style="display: none;">Error loading PDF. The file might be corrupted or invalid.</div>';
-                                    } else {
-                                        echo '<img src="' . $viewUrl . '" class="preview-image" alt="Document Preview" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';">';
-                                        echo '<div class="error" style="display: none;">Error loading image. The file might be corrupted or invalid.</div>';
-                                    }
-                                    ?>
-                                </div>
-
-                                <div class="flex justify-end space-x-3">
-                                    <a href="view-documents.php" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                                        <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
-                                    </a>
-                                    <a href="upload-document.php?update_id=<?php echo urlencode($id); ?>" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
-                                        <i class="fas fa-edit mr-1 text-xs"></i> Update
-                                    </a>
-                                    <button onclick="window.print()" class="bg-blue-600 text-white py-2 px-4 rounded text-sm hover:bg-blue-700 flex items-center">
-                                        <i class="fas fa-print mr-1 text-xs"></i> Print
-                                    </button>
+                        <div class="flex">
+                            <div class="preview-container">
+                                <?php
+                                $viewUrl = "view-document.php?id=" . urlencode($id);
+                                if ($doc['file_type'] === 'application/pdf') {
+                                    echo '<iframe src="' . $viewUrl . '" class="preview-pdf" title="Document Preview"></iframe>';
+                                    echo '<div class="error" style="display: none;">Error loading PDF. The file might be corrupted or invalid.</div>';
+                                } else {
+                                    echo '<img src="' . $viewUrl . '" class="preview-image" alt="Document Preview" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';">';
+                                    echo '<div class="error" style="display: none;">Error loading image. The file might be corrupted or invalid.</div>';
+                                }
+                                ?>
+                            </div>
+                            <div class="details-container">
+                                <div class="bg-white rounded-lg shadow-sm p-6">
+                                    <div class="space-y-6">
+                                        <div class="form-group">
+                                            <label class="block compact-label">PRF No:</label>
+                                            <div class="text-sm text-gray-700"><?php echo htmlspecialchars($doc['prf_no']); ?></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="block compact-label">File Name:</label>
+                                            <div class="text-sm text-gray-700"><?php echo htmlspecialchars($doc['file_name']); ?></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="block compact-label">File Type:</label>
+                                            <div class="text-sm text-gray-700"><?php echo strtoupper(str_replace('image/', '', str_replace('application/', '', $doc['file_type']))); ?></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="block compact-label">Upload Date:</label>
+                                            <div class="text-sm text-gray-700"><?php echo date('d M Y', strtotime($doc['upload_date'])); ?></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -287,6 +305,13 @@ $mysqli->close();
         document.getElementById('sidebarToggle').addEventListener('click', () => {
             document.querySelector('.sidebar').classList.toggle('active');
         });
+
+        // Auto-print when page loads if print parameter is set
+        if (window.location.search.includes('print=true')) {
+            window.addEventListener('load', function() {
+                window.print();
+            });
+        }
     </script>
 </body>
 </html>
