@@ -83,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         status
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
-    $stmt->bind_param("ssssissssssssiiiiiiiiiiiiiiiiis", 
+    $stmt->bind_param("ssssissssssssiiiiiiiiiiiiiiiiss", 
         $prf, $pos, $rep, $job,
         $replacement, $rep_of_names, $app_names,
         $manning, $manning_specs, $others_reason, $others_reason_specs,

@@ -2,18 +2,18 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-include 'db.php'; // Include database connection
+include 'db.php';
 
 // Check if ID is provided
-if (!isset($_GET['id']) || empty($_GET['id'])) {
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: view-documents.php");
     exit();
 }
 
-$id = (int)$_GET['id']; // Sanitize ID to prevent SQL injection
+$id = (int)$_GET['id'];
 
-// Fetch document details with debugging
-$stmt = $conn->prepare("SELECT prf_no, file_name, file_path, file_type, upload_date FROM scanned_documents WHERE id = ?");
+// Fetch document details
+$stmt = $conn->prepare("SELECT prf_no, file_name, file_type, file_content, upload_date FROM scanned_documents WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -22,10 +22,12 @@ if ($result->num_rows === 0) {
     $error = "Document with ID $id not found in the database.";
 } else {
     $doc = $result->fetch_assoc();
-    // Ensure file path is web-accessible
-    $doc['web_path'] = $doc['file_path']; // Use direct file path
-    // Add debugging output
-    error_log("Fetched document: " . print_r($doc, true)); // Log to server error log
+    // Check if file_content is empty
+    if (empty($doc['file_content'])) {
+        $error = "Document content is missing or corrupted.";
+    } else {
+        error_log("Fetched document: " . print_r($doc, true));
+    }
 }
 $stmt->close();
 $conn->close();
@@ -121,6 +123,34 @@ $conn->close();
             max-width: 48rem;
             width: 100%;
         }
+        @media (max-width: 768px) {
+            .preview-container {
+                max-height: 400px;
+            }
+            .preview-pdf {
+                height: 400px;
+            }
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .preview-container, .preview-container * {
+                visibility: visible;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 210mm;
+                height: auto;
+                max-height: 297mm;
+                object-fit: contain;
+                border: none;
+            }
+            .preview-pdf {
+                width: 210mm;
+                height: 297mm;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -214,23 +244,29 @@ $conn->close();
                                     <div class="text-sm text-gray-700"><?php echo date('d M Y', strtotime($doc['upload_date'])); ?></div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="block compact-label">File Path (Debug):</label>
-                                    <div class="debug"><?php echo htmlspecialchars($doc['web_path']); ?></div>
+                                    <label class="block compact-label">File Size:</label>
+                                    <div class="text-sm text-gray-700">
+                                        <?php
+                                        $sizeInBytes = strlen($doc['file_content']);
+                                        if ($sizeInBytes >= 1024 * 1024) {
+                                            echo round($sizeInBytes / (1024 * 1024), 2) . ' MB';
+                                        } else {
+                                            echo round($sizeInBytes / 1024, 2) . ' KB';
+                                        }
+                                        ?>
+                                    </div>
                                 </div>
 
                                 <div class="section-title">Document Preview</div>
                                 <div class="preview-container">
                                     <?php
-                                    // Check if file exists and is readable
-                                    if (file_exists($doc['file_path']) && is_readable($doc['file_path'])) {
-                                        if ($doc['file_type'] === 'application/pdf') {
-                                            echo '<iframe src="' . htmlspecialchars($doc['web_path']) . '" class="preview-pdf"></iframe>';
-                                        } else {
-                                            echo '<img src="' . htmlspecialchars($doc['web_path']) . '" class="preview-image" alt="Document Preview" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';">';
-                                            echo '<div class="error" style="display: none;">Error loading image. The file might be corrupted or invalid.</div>';
-                                        }
+                                    $base64Content = base64_encode($doc['file_content']);
+                                    if ($doc['file_type'] === 'application/pdf') {
+                                        echo '<iframe src="data:application/pdf;base64,' . $base64Content . '" class="preview-pdf" title="Document Preview"></iframe>';
+                                        echo '<div class="error" style="display: none;">Error loading PDF. The file might be corrupted or invalid.</div>';
                                     } else {
-                                        echo '<div class="error">File not found or inaccessible at: ' . htmlspecialchars($doc['file_path']) . '</div>';
+                                        echo '<img src="data:' . htmlspecialchars($doc['file_type']) . ';base64,' . $base64Content . '" class="preview-image" alt="Document Preview" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';">';
+                                        echo '<div class="error" style="display: none;">Error loading image. The file might be corrupted or invalid.</div>';
                                     }
                                     ?>
                                 </div>
@@ -239,9 +275,12 @@ $conn->close();
                                     <a href="view-documents.php" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
                                         <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
                                     </a>
-                                    <a href="update-document.php?id=<?php echo urlencode($id); ?>" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                                    <a href="upload-document.php?update_id=<?php echo urlencode($id); ?>" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
                                         <i class="fas fa-edit mr-1 text-xs"></i> Update
                                     </a>
+                                    <button onclick="window.print()" class="bg-blue-600 text-white py-2 px-4 rounded text-sm hover:bg-blue-700 flex items-center">
+                                        <i class="fas fa-print mr-1 text-xs"></i> Print
+                                    </button>
                                 </div>
                             </div>
                         </div>

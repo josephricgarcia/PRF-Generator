@@ -2,7 +2,7 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-include 'db.php'; // Include database connection
+include 'db.php';
 
 // Fetch data from scanned_documents table
 $query = "SELECT 
@@ -15,6 +15,9 @@ $query = "SELECT
           ORDER BY date DESC";
 
 $result = $conn->query($query);
+if (!$result) {
+    die("Query failed: " . $conn->error);
+}
 $documents = [];
 if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
@@ -161,6 +164,10 @@ $conn->close();
             border-right: 8px solid transparent;
             border-top: 8px solid white;
         }
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -265,7 +272,7 @@ $conn->close();
                                             <i class="fas fa-eye"></i>
                                             <span>View</span>
                                         </a>
-                                        <a href="update-document.php?id=<?php echo urlencode($doc['id']); ?>" class="text-orange-600 hover:text-orange-800">
+                                        <a href="upload-document.php?update_id=<?php echo urlencode($doc['id']); ?>" class="text-orange-600 hover:text-orange-800">
                                             <i class="fas fa-edit"></i>
                                             <span>Update</span>
                                         </a>
@@ -302,7 +309,7 @@ $conn->close();
                         <span>Create On Call Form</span>
                     </a>
                     <a href="upload-document.php">
-                        <i class="fas fa-scanner"></i>
+                        <i class="fas fa-upload"></i>
                         <span>Upload Document</span>
                     </a>
                 </div>
@@ -342,6 +349,7 @@ $conn->close();
                 const docId = this.getAttribute('data-id');
                 
                 if (confirm(`Are you sure you want to delete document with ID ${docId}?`)) {
+                    this.classList.add('disabled'); // Disable button during request
                     fetch('delete-document.php', {
                         method: 'POST',
                         headers: {
@@ -351,6 +359,7 @@ $conn->close();
                     })
                     .then(response => response.json())
                     .then(data => {
+                        this.classList.remove('disabled');
                         if (data.success) {
                             alert(data.message);
                             window.location.reload();
@@ -359,6 +368,7 @@ $conn->close();
                         }
                     })
                     .catch(error => {
+                        this.classList.remove('disabled');
                         console.error('Error:', error);
                         alert('An error occurred while deleting the document.');
                     });

@@ -332,7 +332,7 @@ $conn->close();
                         <span>Create On Call Form</span>
                     </a>
                     <a href="upload-document.php">
-                        <i class="fas fa-scanner"></i>
+                        <i class="fas fa-upload"></i>
                         <span>Upload Document</span>
                     </a>
                 </div>
