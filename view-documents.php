@@ -226,7 +226,7 @@ $conn->close();
                             <span class="absolute inset-y-0 left-0 flex items-center pl-2">
                                 <i class="fas fa-search text-gray-400 text-sm"></i>
                             </span>
-                            <input type="text" class="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Search Documents...">
+                            <input type="text" class="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Search by PRF No...">
                         </div>
                     </div>
                 </div>
@@ -256,16 +256,16 @@ $conn->close();
                                     <td class="table-cell whitespace-nowrap text-gray-500"><?php echo $fileType; ?></td>
                                     <td class="table-cell whitespace-nowrap text-gray-500"><?php echo $formattedDate; ?></td>
                                     <td class="table-cell whitespace-nowrap font-medium action-links">
-                                        <a href="preview-document.php?id=<?php echo urlencode($doc['id']); ?>" class="text-orange-600 hover:text-orange-800 view-file">
+                                        <a href="preview-document.php?id=<?php echo urlencode($doc['id']); ?>" class="text-blue-600 hover:text-blue-800 view-file" title="View">
                                             <i class="fas fa-eye"></i>
                                             <span>View</span>
                                         </a>
-                                        <a href="update-document.php?update_id=<?php echo urlencode($doc['id']); ?>" class="text-orange-600 hover:text-orange-800">
-                                            <i class="fas fa-edit"></i>
+                                        <a href="update-document.php?update_id=<?php echo urlencode($doc['id']); ?>" class="text-green-600 hover:text-green-800" title="Update">
+                                            <i class="fas fa-pen-to-square"></i>
                                             <span>Update</span>
                                         </a>
-                                        <a href="delete-document.php" class="text-orange-600 hover:text-orange-800 delete-document" data-id="<?php echo htmlspecialchars($doc['id']); ?>">
-                                            <i class="fas fa-trash"></i>
+                                        <a href="delete-document.php" class="text-red-600 hover:text-red-800 delete-document" data-id="<?php echo htmlspecialchars($doc['id']); ?>" title="Delete">
+                                            <i class="fas fa-trash-alt"></i>
                                             <span>Delete</span>
                                         </a>
                                     </td>
@@ -372,14 +372,8 @@ $conn->close();
             
             rows.forEach(row => {
                 const prfNo = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-                const fileName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                const fileType = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-                const date = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
                 
-                if (prfNo.includes(searchTerm) || 
-                    fileName.includes(searchTerm) || 
-                    fileType.includes(searchTerm) || 
-                    date.includes(searchTerm)) {
+                if (prfNo.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';

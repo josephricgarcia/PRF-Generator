@@ -18,7 +18,7 @@ $query = "SELECT
             date_requested AS date 
           FROM oncall_forms
           ORDER BY date DESC
-          LIMIT 3";
+          LIMIT 5";
 
 $result = $conn->query($query);
 $forms = [];
@@ -135,6 +135,19 @@ $conn->close();
                                 <div>
                                     <h3 class="font-semibold text-base">PRF Files</h3>
                                     <p class="text-gray-500 text-sm">Access existing PRF documents</p>
+                                </div>
+                            </div>
+                        </div>
+                        </a>
+                        <a href="view-documents.php">
+                        <div class="card-hover bg-white rounded-xl shadow-md p-6 transition duration-300 cursor-pointer hover:border-orange-500 border border-transparent">
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-orange-100 p-3 rounded-full">
+                                    <i class="fas fa-folder text-orange-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-base">Scanned Documents</h3>
+                                    <p class="text-gray-500 text-sm">Access existing scanned documents</p>
                                 </div>
                             </div>
                         </div>

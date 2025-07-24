@@ -107,9 +107,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $conn->close();
 ?>
 
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -293,6 +290,17 @@ $conn->close();
                         </button>
                         <h1 class="text-lg font-semibold text-gray-800">Create On Call Form</h1>
                     </div>
+                    <div class="flex space-x-3">
+                        <button type="submit" form="oncallForm" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                            <i class="fas fa-save mr-1 text-xs"></i> Save
+                        </button>
+                        <button type="reset" form="oncallForm" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
+                        </button>
+                        <a href="view-form.php" class="bg-blue-600 text-white py-1.5 px-4 rounded text-sm hover:bg-blue-700 flex items-center">
+                            <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
+                        </a>
+                    </div>
                 </div>
             </header>
 
@@ -302,6 +310,7 @@ $conn->close();
                         <?php if (isset($success)): ?>
                             <script>
                                 alert(<?php echo json_encode($success); ?>);
+                                window.location.href = "view-form.php";
                             </script>
                         <?php elseif (isset($error)): ?>
                             <script>
@@ -311,7 +320,7 @@ $conn->close();
                     <?php endif; ?>
                     
                     <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-                        <form action="" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4 compact-section">
+                        <form id="oncallForm" action="" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4 compact-section">
                             <!-- Left Column -->
                             <div class="space-y-3">
                                 <div class="form-group">
@@ -484,16 +493,6 @@ $conn->close();
                                         <button type="button" id="addOthersRequirementField" class="bg-blue-500 text-white compact-btn rounded text-sm hover:bg-blue-600" disabled>Add requirement</button>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Form buttons -->
-                            <div class="col-span-1 md:col-span-2 mt-4 flex space-x-3">
-                                <button type="submit" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
-                                    <i class="fas fa-save mr-1 text-xs"></i> Save
-                                </button>
-                                <button type="reset" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                                    <i class="fas fa-undo mr-1 text-xs"></i> Reset
-                                </button>
                             </div>
                         </form>
                     </div>

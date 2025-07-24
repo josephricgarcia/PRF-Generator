@@ -23,7 +23,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Validate PRF number
     if (empty($prf) || !preg_match('/^[a-zA-Z0-9\-_]{1,50}$/', $prf)) {
-        $error = "Invalid PRF number. Use alphanumeric characters, dashes, or underscores (max 50 characters).";
+        ?>
+        <script>
+            alert("Invalid PRF number. Use alphanumeric characters, dashes, or underscores (max 50 characters).");
+        </script>
+        <?php
     } else {
         // Insert new record, requires file
         if (isset($_FILES['document']) && $_FILES['document']['error'] == 0) {
@@ -35,7 +39,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $maxFileSize = 4 * 1024 * 1024; // 4MB
 
             if ($fileSize > $maxFileSize) {
-                $error = "File size exceeds the maximum limit of 4MB.";
+                ?>
+                <script>
+                    alert("File size exceeds the maximum limit of 4MB.");
+                </script>
+                <?php
             } elseif (in_array($fileType, $allowedTypes)) {
                 $fileContent = file_get_contents($file['tmp_name']);
                 $stmt = $conn->prepare("INSERT INTO scanned_documents (prf_no, file_name, file_type, file_content, upload_date) VALUES (?, ?, ?, ?, NOW())");
@@ -44,16 +52,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $stmt->send_long_data(3, $fileContent);
 
                 if ($stmt->execute()) {
-                    $success = "Document uploaded successfully!";
+                    ?>
+                    <script>
+                        alert("Document uploaded successfully!");
+                        window.location.href = "view-documents.php";
+                    </script>
+                    <?php
                 } else {
-                    $error = "Error saving to database: " . $stmt->error;
+                    ?>
+                    <script>
+                        alert("Error saving to database: <?php echo addslashes($stmt->error); ?>");
+                    </script>
+                    <?php
                 }
                 $stmt->close();
             } else {
-                $error = "Invalid file type. Only JPEG, PNG, and PDF are allowed.";
+                ?>
+                <script>
+                    alert("Invalid file type. Only JPEG, PNG, and JPG are allowed.");
+                </script>
+                <?php
             }
         } else {
-            $error = "No file uploaded or an error occurred during upload.";
+            ?>
+            <script>
+                alert("No file uploaded or an error occurred during upload.");
+            </script>
+            <?php
         }
     }
 }
@@ -235,17 +260,18 @@ $conn->close();
                         <a href="view-documents.php" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
                             <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
                         </a>
+                                                                <button type="submit" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
+                                            <i class="fas fa-save mr-1 text-xs"></i> Save
+                                        </button>
+                                        <button type="reset" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
+                                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
+                                        </button>
                     </div>
                 </header>
 
             <!-- Main Content -->
             <main class="flex-1 overflow-y-auto p-4 card">
                 <div class="form-container">
-                    <?php if (isset($success)): ?>
-                        <div class="success"><?php echo htmlspecialchars($success); ?></div>
-                    <?php elseif (isset($error)): ?>
-                        <div class="error"><?php echo htmlspecialchars($error); ?></div>
-                    <?php endif; ?>
                     <div class="flex">
                         <div class="preview-container" id="previewContainer">
                             <img id="previewImage" class="preview-image" alt="Document Preview" style="display: none;">
@@ -264,12 +290,7 @@ $conn->close();
                                         <input type="file" id="document" name="document" accept="image/jpeg,image/png,image/jpg" class="compact-input border rounded focus:outline-none focus:border-orange-600" required>
                                     </div>
                                     <div class="flex justify-end space-x-3">
-                                        <button type="submit" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
-                                            <i class="fas fa-save mr-1 text-xs"></i> Save
-                                        </button>
-                                        <button type="reset" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
-                                        </button>
+
                                     </div>
                                 </form>
                             </div>

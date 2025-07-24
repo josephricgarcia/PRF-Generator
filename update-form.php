@@ -322,13 +322,10 @@ $conn->close();
                     </div>
                     <div class="flex space-x-3">
                         <button type="submit" form="updateForm" class="bg-orange-600 text-white py-1.5 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
-                            <i class="fas fa-save mr-1 text-xs"></i> Update
+                            <i class="fas fa-floppy-disk mr-1 text-xs"></i> <span class="text-white">Update</span>
                         </button>
-                        <button type="reset" form="updateForm" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
-                        </button>
-                        <a href="view-form.php" class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                            <i class="fas fa-arrow-left mr-1 text-xs"></i> Back
+                        <a href="view-form.php" class="bg-gray-200 text-gray-800 py-1.5 px-4 rounded text-sm hover:bg-gray-300 flex items-center">
+                            <i class="fas fa-arrow-left mr-1 text-xs"></i> <span class="text-gray-800">Back</span>
                         </a>
                     </div>
                 </div>

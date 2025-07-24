@@ -8,14 +8,20 @@ include 'db.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $prf = htmlspecialchars(trim($_POST['prf']));
     $updateId = isset($_POST['update_id']) ? (int)$_POST['update_id'] : 0;
-    $error = '';
-    $success = '';
 
     // Validate PRF number
     if (empty($prf) || !preg_match('/^[a-zA-Z0-9\-_]{1,50}$/', $prf)) {
-        $error = "Invalid PRF number. Use alphanumeric characters, dashes, or underscores (max 50 characters).";
+        ?>
+        <script>
+            alert("Invalid PRF number. Use alphanumeric characters, dashes, or underscores (max 50 characters).");
+        </script>
+        <?php
     } elseif ($updateId <= 0) {
-        $error = "Invalid document ID.";
+        ?>
+        <script>
+            alert("Invalid document ID.");
+        </script>
+        <?php
     } else {
         // Update existing record
         if (isset($_FILES['document']) && $_FILES['document']['error'] == 0) {
@@ -28,7 +34,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $maxFileSize = 4 * 1024 * 1024; // 4MB
 
             if ($fileSize > $maxFileSize) {
-                $error = "File size exceeds the maximum limit of 4MB.";
+                ?>
+                <script>
+                    alert("File size exceeds the maximum limit of 4MB.");
+                </script>
+                <?php
             } elseif (in_array($fileType, $allowedTypes)) {
                 $fileContent = file_get_contents($file['tmp_name']);
                 $stmt = $conn->prepare("UPDATE scanned_documents SET prf_no = ?, file_name = ?, file_type = ?, file_content = ?, upload_date = NOW() WHERE id = ?");
@@ -36,7 +46,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $stmt->bind_param("sssbi", $prf, $fileName, $fileType, $null, $updateId);
                 $stmt->send_long_data(3, $fileContent);
             } else {
-                $error = "Invalid file type. Only JPEG, PNG, and PDF are allowed.";
+                ?>
+                <script>
+                    alert("Invalid file type. Only JPEG, PNG, and PDF are allowed.");
+                </script>
+                <?php
             }
         } else {
             // No new file, update only prf_no
@@ -46,9 +60,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if (isset($stmt)) {
             if ($stmt->execute()) {
-                $success = "Document updated successfully!";
+                ?>
+                <script>
+                    alert("Document updated successfully!");
+                    window.location.href = "view-documents.php";
+                </script>
+                <?php
             } else {
-                $error = "Error updating database: " . $stmt->error;
+                ?>
+                <script>
+                    alert("Error updating database: <?php echo addslashes($stmt->error); ?>");
+                </script>
+                <?php
             }
             $stmt->close();
         }
@@ -66,7 +89,11 @@ if ($updateId > 0) {
     $updateData = $result->fetch_assoc();
     $stmt->close();
 } else {
-    $error = "No document ID provided.";
+    ?>
+    <script>
+        alert("No document ID provided.");
+    </script>
+    <?php
 }
 
 $conn->close();
@@ -250,9 +277,6 @@ $conn->close();
                         <button type="submit" form="updateForm" class="bg-orange-600 text-white py-2 px-4 rounded text-sm hover:bg-orange-700 flex items-center">
                             <i class="fas fa-save mr-1 text-xs"></i> Update
                         </button>
-                        <button type="reset" form="updateForm" class="bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm hover:bg-gray-400 flex items-center">
-                            <i class="fas fa-undo mr-1 text-xs"></i> Reset
-                        </button>
                         <?php endif; ?>
                     </div>
                 </header>
@@ -260,11 +284,6 @@ $conn->close();
             <!-- Main Content -->
             <main class="flex-1 overflow-y-auto p-4 card">
                 <div class="form-container">
-                    <?php if (isset($success)): ?>
-                        <div class="success"><?php echo htmlspecialchars($success); ?></div>
-                    <?php elseif (isset($error)): ?>
-                        <div class="error"><?php echo htmlspecialchars($error); ?></div>
-                    <?php endif; ?>
                     <?php if ($updateData): ?>
                         <div class="flex">
                             <div class="preview-container" id="previewContainer">
@@ -352,14 +371,6 @@ $conn->close();
             } else {
                 previewContainer.style.display = 'none';
             }
-        });
-
-        // Clear preview when resetting form
-        document.querySelector('button[form="updateForm"][type="reset"]').addEventListener('click', () => {
-            previewContainer.style.display = 'none';
-            previewImage.style.display = 'none';
-            previewPDF.style.display = 'none';
-            previewContainer.querySelector('.error').style.display = 'none';
         });
 
         // Show existing document preview
